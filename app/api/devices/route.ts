@@ -10,7 +10,7 @@ interface Device {
     power: number;    // Adding power in kWh
 }
 
-let devices: Device[] = [
+const devices: Device[] = [
     { id: 1, name: 'Charger 1', latitude: 34.0522, longitude: -118.2437, details: 'Connected', zipCode: '90001', power: 50 },
     { id: 2, name: 'Charger 2', latitude: 40.7128, longitude: -74.0060, details: 'Connected', zipCode: '10001', power: 75 },
 ];
