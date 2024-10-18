@@ -57,6 +57,6 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: 'Failed to store device on chain' }, { status: 500 });
         }
     } catch (error) {
-        return NextResponse.json({ message: 'Error storing device on chain' }, { status: 500 });
+        return NextResponse.json({ message: error}, { status: 500 });
     }
 }
