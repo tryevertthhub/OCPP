@@ -11,19 +11,23 @@ interface Device {
     name: string;
     latitude: number;
     longitude: number;
-    details?: string; // Optional details
+    details?: string; // Make details optional if not provided
+    zipCode: string,
+    power: Number, // Ensure power is a number
 }
 
 const Map = () => {
     const [devices, setDevices] = useState<Device[]>([]);
-    const [map, setMap] = useState<mapboxgl.Map | null>(null); // Fixing the type to allow null or mapboxgl.Map
+    const [map, setMap] = useState<mapboxgl.Map | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredDevices, setFilteredDevices] = useState<Device[]>([]);
-    const [deviceInfo, setDeviceInfo] = useState({
+    const [deviceInfo, setDeviceInfo] = useState<{ name: string; lat: string; long: string; details: string, zipCode: string, power: number}>({
         name: '',
         lat: '',
         long: '',
         details: '', // Ensure details is included in initial state
+        zipCode:'',
+        power: 0
     });
 
     // Fetch devices from API
@@ -41,17 +45,15 @@ const Map = () => {
 
         fetchDevices();
 
-        // Initialize Mapbox map
         const mapboxMap = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/streets-v11', // Set style for the map
-            center: [0, 0], // Default center
+            center: [0, 0],
             zoom: 2,
         });
 
-        setMap(mapboxMap); // Set the map state
+        setMap(mapboxMap);
 
-        return () => mapboxMap.remove(); // Cleanup map on component unmount
+        return () => mapboxMap.remove();
     }, []);
 
     // Function to add markers to the map
@@ -68,7 +70,7 @@ const Map = () => {
                 if (!isNaN(device.longitude) && !isNaN(device.latitude)) {
                     new mapboxgl.Marker()
                         .setLngLat([device.longitude, device.latitude])
-                        .setPopup(new mapboxgl.Popup().setHTML(`<h3>${device.name}</h3><p>${device.details || ''}</p>`))
+                        .setPopup(new mapboxgl.Popup().setHTML(`<h3>${device.name}</h3><p>${device.details || ''}</p><p>${device.zipCode || ''}</p>`))
                         .addTo(map);
                 } else {
                     console.error(`Invalid coordinates for device ${device.name}: (${device.longitude}, ${device.latitude})`);
@@ -89,7 +91,7 @@ const Map = () => {
         setFilteredDevices(devices.filter(device => device.name.toLowerCase().includes(value.toLowerCase())));
     };
 
-    // Form handling for adding a new device
+    // Form handling
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setDeviceInfo(prev => ({ ...prev, [name]: value }));
@@ -112,7 +114,9 @@ const Map = () => {
             name: deviceInfo.name,
             latitude: latitude,  // Ensure lat is a number
             longitude: longitude, // Ensure long is a number
-            details: deviceInfo.details || 'Connected',  // Use deviceInfo.details or default to 'Connected'
+            details: deviceInfo.details || 'Connected',  // Use deviceInfo.details or default to 'Connected',
+            zipCode: deviceInfo.zipCode,
+            power: deviceInfo.power
         };
 
         try {
@@ -136,7 +140,7 @@ const Map = () => {
                     addMarkersToMap(updatedDevices);
 
                     // Reset form fields
-                    setDeviceInfo({ name: '', lat: '', long: '', details: '' }); // Reset all fields
+                    setDeviceInfo({ name: '', lat: '', long: '', details: '', zipCode : '', power: 0 }); // Reset all fields
                     console.log('Device added successfully:', addedDevice);
                 } else {
                     console.error('Invalid device added:', addedDevice);
@@ -182,12 +186,30 @@ const Map = () => {
                 />
                 <input
                     className={styles.input}
+                    name="power"
+                    placeholder="Power"
+                    value={deviceInfo.power} // Controlled input
+                    onChange={handleFormChange}
+                    required
+                />
+                 <input
+                    className={styles.input}
+                    name="zipCode"
+                    placeholder="Zipcode"
+                    value={deviceInfo.zipCode} // Controlled input
+                    onChange={handleFormChange}
+                    required
+                />
+                 
+                <input
+                    className={styles.input}
                     name="details"
                     placeholder="Device Details"
                     value={deviceInfo.details} // Controlled input
                     onChange={handleFormChange}
                     required
                 />
+                
                 <button type="submit" className={styles.submitBtn}>Add Device</button>
             </form>
 
