@@ -44,18 +44,36 @@
 
 /* Submit button styling */
 .submitBtn {
-    padding: 10px 20px;
-    background-color: #3498db;
-    color: #fff;
+    padding: 12px 30px;
+    background: linear-gradient(45deg, #3498db, #2ecc71); /* Gradient background for a modern look */
+    color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 30px; /* Fully rounded button */
+    font-size: 0.8rem; /* Slightly larger font */
+    font-weight: bold; /* Bold text for emphasis */
+    text-transform: uppercase; /* Make text all caps */
+    letter-spacing: 1px; /* Spacing between letters */
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow */
 }
 
 .submitBtn:hover {
-    background-color: #2980b9;
+    background: linear-gradient(45deg, #2ecc71, #3498db); /* Reverse the gradient on hover */
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); /* Stronger shadow on hover */
+    transform: translateY(-2px); /* Slight upward lift on hover */
 }
+
+.submitBtn:active {
+    transform: translateY(0); /* Button goes back to original position on click */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Softer shadow on click */
+}
+
+.submitBtn:focus {
+    outline: none; /* Remove the default focus outline */
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.5); /* Custom focus outline for accessibility */
+}
+
 
 /* Map and Sidebar container */
 .mapInfoContainer {
