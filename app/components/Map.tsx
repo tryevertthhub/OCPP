@@ -1,4 +1,4 @@
-'use client';
+n'use client';
 import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -13,7 +13,7 @@ interface Device {
     longitude: number;
     details?: string; // Make details optional if not provided
     zipCode: string,
-    power: Number, // Ensure power is a number
+    power: number, // Ensure power is a number
 }
 
 const Map = () => {
