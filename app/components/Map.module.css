@@ -45,7 +45,7 @@
 /* Submit button styling */
 .submitBtn {
     padding: 12px 30px;
-    background: linear-gradient(45deg, #3498db, #2ecc71); /* Gradient background for a modern look */
+   background: linear-gradient(45deg, #34bdfa, #5f6df1); /* Gradient background for a modern look */
     color: white;
     border: none;
     border-radius: 30px; /* Fully rounded button */
