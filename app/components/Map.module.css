@@ -97,45 +97,82 @@
 }
 
 /* Device List in Sidebar */
+/* Device List (Styled as cards) */
 .deviceList {
-    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive grid for cards */
+    gap: 20px; /* Space between cards */
     padding: 0;
+    list-style-type: none;
+    margin: 0;
 }
 
-/* Each device item */
+/* Each device card */
 .deviceItem {
-    padding: 15px;
-    margin-bottom: 15px;
-    background-color: #fff;
-    border-radius: 6px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     cursor: pointer;
+    padding: 20px;
 }
 
 .deviceItem:hover {
-    background-color: #f1f1f1;
+    transform: translateY(-10px); /* Lift the card on hover */
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
-/* Device info styling */
+/* Device info styling inside the card */
+.deviceInfo {
+    text-align: left;
+}
+
+/* Device title */
 .deviceInfo h4 {
-    margin: 0 0 5px 0;
-    font-size: 1.2rem;
+    margin: 0 0 10px;
+    font-size: 1.4rem;
     color: #34495e;
-    font-weight: bold;
+    font-weight: 600;
 }
 
+/* Device details text */
 .deviceInfo p {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 1rem;
     color: #7f8c8d;
+    line-height: 1.4;
 }
 
-/* No devices found message */
+/* Card footer (could be additional info like power or zip code) */
+.cardFooter {
+    margin-top: 15px;
+    font-size: 0.85rem;
+    color: #b0b0b0;
+}
+
+/* Responsive layout for the device cards */
+@media (max-width: 768px) {
+    .deviceItem {
+        padding: 15px;
+    }
+
+    .deviceInfo h4 {
+        font-size: 1.2rem;
+    }
+
+    .deviceInfo p {
+        font-size: 0.9rem;
+    }
+}
 .noDevices {
     text-align: center;
     color: #e74c3c;
 }
+
 
 /* Scrollbar styling for the sidebar */
 .sidebar::-webkit-scrollbar {
