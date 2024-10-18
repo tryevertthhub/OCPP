@@ -1,0 +1,102 @@
+/* Main container */
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Full height of the viewport */
+}
+
+/* Add Device Form at the top */
+.addDeviceForm {
+    width: 100%;
+    padding: 20px;
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.title {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #34495e;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.input {
+    width: 25%;
+    padding: 10px;
+    margin: 0 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+}
+
+.submitBtn {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.submitBtn:hover {
+    background-color: #2980b9;
+}
+
+/* Map and Sidebar container */
+.mapInfoContainer {
+    display: flex;
+    flex-grow: 1;
+}
+
+/* Map Section */
+.map {
+    width: 75%;
+    height: 100%;
+    position: relative;
+}
+
+/* Sidebar (Connected Devices Info) */
+.sidebar {
+    width: 25%;
+    background-color: #f8f9fa;
+    padding: 20px;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.deviceList {
+    list-style: none;
+    padding: 0;
+}
+
+.deviceItem {
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.deviceInfo h4 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #34495e;
+}
+
+.noDevices {
+    text-align: center;
+    color: #e74c3c;
+}
