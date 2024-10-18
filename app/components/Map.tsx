@@ -57,20 +57,28 @@ const Map = () => {
     }, []);
 
     // Function to add markers to the map
-    const addMarkersToMap = (devicesToShow: Device[]) => {
+     const addMarkersToMap = (devicesToShow: Device[]) => {
         if (map) {
             // Clear existing markers first
             const markers = document.getElementsByClassName('mapboxgl-marker');
             while (markers[0]) {
                 markers[0].remove();
             }
-
+    
             // Add new markers
             devicesToShow.forEach(device => {
                 if (!isNaN(device.longitude) && !isNaN(device.latitude)) {
+                    const popupContent = `
+                        <div class="popup-content">
+                            <h3 class="popup-title">${device.name}</h3>
+                            <p class="popup-details">${device.details || 'No additional details available.'}</p>
+                            <p class="popup-zip"><strong>Zip Code:</strong> ${device.zipCode || 'N/A'}</p>
+                        </div>
+                    `;
+    
                     new mapboxgl.Marker()
                         .setLngLat([device.longitude, device.latitude])
-                        .setPopup(new mapboxgl.Popup().setHTML(`<h3>${device.name}</h3><p>${device.details || ''}</p><p>${device.zipCode || ''}</p>`))
+                        .setPopup(new mapboxgl.Popup().setHTML(popupContent))
                         .addTo(map);
                 } else {
                     console.error(`Invalid coordinates for device ${device.name}: (${device.longitude}, ${device.latitude})`);
@@ -78,6 +86,7 @@ const Map = () => {
             });
         }
     };
+    
 
     // Initial markers on load
     useEffect(() => {
