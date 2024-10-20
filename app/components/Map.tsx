@@ -238,7 +238,7 @@ const Map = () => {
                 <input className={styles.input} name="zipCode" placeholder="Zipcode" value={deviceInfo.zipCode} onChange={handleFormChange} required />
                 <input className={styles.input} name="power" placeholder="Power (kW)" type="number" value={deviceInfo.power} onChange={handleFormChange} required />
                 <input className={styles.input} name="details" placeholder="Details" value={deviceInfo.details} onChange={handleFormChange} />
-                <button type="submit" className={styles.submitBtn}>Add Device</button>
+                <button type="submit" className={styles.submitBtn}>Add Charger</button>
             </form>
 
 
@@ -251,7 +251,7 @@ const Map = () => {
                 </div>
 
                 <div className={styles.sidebar}>
-                    <input type="text" placeholder="Search devices..." value={searchTerm} onChange={handleInputChange} className={styles.searchInput} />
+                    <input type="text" placeholder="Search chargers..." value={searchTerm} onChange={handleInputChange} className={styles.searchInput} />
                     {filteredDevices.length > 0 ? (
                         <ul className={styles.deviceList}>
                             {filteredDevices.map(device => (
