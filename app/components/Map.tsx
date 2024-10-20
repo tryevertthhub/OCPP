@@ -70,9 +70,15 @@ const Map = () => {
                 if (!isNaN(device.longitude) && !isNaN(device.latitude)) {
                     const popupContent = `
                         <div class="popup-content">
-                            <h3 class="popup-title">${device.name}</h3>
-                            <p class="popup-details">${device.details || 'No additional details available.'}</p>
+                           <div class="popup-header">
+                              <img src="/images/device-icon.png" alt="Device Icon" class="popup-icon" />
+                              <h3 class="popup-title">${device.name}</h3>
+                           </div>
+                         <div class="popup-body">
+                            <p class="popup-details"><strong>Details:</strong> ${device.details || 'No additional details available.'}</p>
                             <p class="popup-zip"><strong>Zip Code:</strong> ${device.zipCode || 'N/A'}</p>
+                            <p class="popup-power"><strong>Power:</strong> ${device.power} kW</p>
+                         </div>
                         </div>
                     `;
     
