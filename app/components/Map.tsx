@@ -95,11 +95,9 @@ const Map = () => {
             devicesToShow.forEach(device => {
                 if (device.location && !isNaN(device.location.longitude) && !isNaN(device.location.latitude)) {
                     const popupContent = `
-                        <div class="popup-content">
-                            <div class="popup-header">
-                                <h3 class="popup-title">${device.manufacturer} - ${device.model}</h3>
-                            </div>
-                            <div class="popup-body">
+                        <div class="${styles.popupContent}">
+                            <h3 class="${styles.popupTitle}">${device.manufacturer} - ${device.model}</h3>
+                            <div class="${styles.popupDetails}">
                                 <p><strong>Status:</strong> ${device.status}</p>
                                 <p><strong>Energy Capacity:</strong> ${device.energyCapacity}</p>
                                 <p><strong>Connector Type:</strong> ${device.connectorType}</p>
@@ -107,6 +105,8 @@ const Map = () => {
                                 <p><strong>Software Version:</strong> ${device.softwareVersion}</p>
                                 <p><strong>Location:</strong> ${device.location.zipCode} (${device.location.latitude}, ${device.location.longitude})</p>
                                 <p><strong>On-chain Data:</strong> <a href="${device.onChainData.vppScanUrl}" target="_blank">${device.onChainData.transactionHash}</a></p>
+                                <p><strong>Block Number:</strong> ${device.onChainData.blockNumber}</p>
+                                <p><strong>Timestamp:</strong> ${new Date(device.onChainData.timestamp).toLocaleString()}</p>
                             </div>
                         </div>
                     `;
