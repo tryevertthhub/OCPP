@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from '../../components/Map.module.css';
-mapboxgl.accessToken = 'pk.eyJ1IjoiZGVqYW5mZXRvdnNraSIsImEiOiJjbTJkaWd5c3IxZHpkMmpyMnFoNmM5Mnh4In0.G7TWLfvTgQtdtROdDQJFcQ';
+import { motion } from 'framer-motion'; // For animation
 
+mapboxgl.accessToken = 'pk.eyJ1IjoiZGVqYW5mZXRvdnNraSIsImEiOiJjbTJkaWd5c3IxZHpkMmpyMnFoNmM5Mnh4In0.G7TWLfvTgQtdtROdDQJFcQ';
 
 interface OnChainData {
     transactionHash: string;
@@ -49,7 +50,6 @@ const UserMap = () => {
             try {
                 const response = await fetch('/api/devices');
                 const data = await response.json();
-                console.log('Fetched chargers:', data);
                 setChargers(data);
             } catch (error) {
                 console.error('Error fetching chargers:', error);
@@ -60,18 +60,13 @@ const UserMap = () => {
 
         if (!map) {
             const mapboxMap = new mapboxgl.Map({
-                container: 'map', // Ensure container has the correct ID
-                center: [0, 0], // Initial position [lng, lat]
-                zoom: 2, 
+                container: 'map',
+                center: [0, 0],
+                zoom: 2,
             });
 
             mapboxMap.on('load', () => {
-                console.log('Map loaded successfully.');
                 setMap(mapboxMap);
-            });
-
-            mapboxMap.on('error', (e) => {
-                console.error('Mapbox error:', e);
             });
         }
 
@@ -105,7 +100,6 @@ const UserMap = () => {
     // Add markers when chargers are ready
     useEffect(() => {
         if (map && chargers.length > 0) {
-            console.log('Chargers fetched, adding markers...');
             addMarkersToMap(chargers);
         }
     }, [map, chargers]);
@@ -122,14 +116,18 @@ const UserMap = () => {
     };
 
     return (
-        <div className="relative w-full h-screen"> {/* Full screen height for the map */}
-            {/* Map container */}
-            <div id="map" className="w-full h-full" /> {/* 100% height for the map */}
+        <div className="relative h-screen w-full">
+            <div id="map" className="absolute inset-0 w-full h-full" />
 
-            {/* UI Panel, visible only when a charger is selected */}
             {selectedCharger && (
-                <div className="absolute top-8 right-8 bg-white shadow-lg p-4 rounded-lg w-96 z-10">
-                    <h2 className="text-xl font-semibold mb-2">Charger Details</h2>
+                <motion.div
+                    initial={{ opacity: 0, x: '100%' }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: '100%' }}
+                    transition={{ duration: 0.5 }}
+                    className="absolute top-4 right-4 p-6 w-96 bg-white/30 backdrop-blur-md shadow-lg rounded-lg text-white space-y-6"
+                >
+                    <h2 className="text-3xl font-semibold text-blue-200">Charger Details</h2>
                     <p><strong>Manufacturer:</strong> {selectedCharger.manufacturer}</p>
                     <p><strong>Model:</strong> {selectedCharger.model}</p>
                     <p><strong>Status:</strong> {selectedCharger.status}</p>
@@ -138,61 +136,61 @@ const UserMap = () => {
                     <p><strong>Location:</strong> {selectedCharger.location.zipCode} ({selectedCharger.location.latitude}, {selectedCharger.location.longitude})</p>
 
                     {selectedCharger.status === 'Available' ? (
-                        <form onSubmit={handleFormSubmit} className="mt-4 space-y-4">
+                        <form onSubmit={handleFormSubmit} className="space-y-4">
                             <div>
-                                <label htmlFor="chargeAmount" className="block font-medium">Charge Amount (kWh):</label>
+                                <label htmlFor="chargeAmount" className="block font-medium text-white">Charge Amount (kWh):</label>
                                 <input
                                     id="chargeAmount"
                                     type="number"
                                     placeholder="Enter amount"
                                     value={chargeAmount}
                                     onChange={(e) => setChargeAmount(e.target.value)}
-                                    className="w-full px-3 py-2 border rounded-md shadow-sm"
+                                    className="mt-1 w-full px-3 py-2 bg-gray-900 text-white border border-gray-600 rounded-md shadow-sm"
                                     required
                                 />
                             </div>
                             <div>
-                                <label htmlFor="deviceName" className="block font-medium">Device Name:</label>
+                                <label htmlFor="deviceName" className="block font-medium text-white">Device Name:</label>
                                 <input
                                     id="deviceName"
                                     type="text"
                                     placeholder="Enter your device name"
                                     value={deviceInfo.deviceName}
                                     onChange={(e) => setDeviceInfo({ ...deviceInfo, deviceName: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-md shadow-sm"
+                                    className="mt-1 w-full px-3 py-2 bg-gray-900 text-white border border-gray-600 rounded-md shadow-sm"
                                     required
                                 />
                             </div>
                             <div>
-                                <label htmlFor="deviceType" className="block font-medium">Device Type:</label>
+                                <label htmlFor="deviceType" className="block font-medium text-white">Device Type:</label>
                                 <input
                                     id="deviceType"
                                     type="text"
-                                    placeholder="Enter device type (e.g., EV model)"
+                                    placeholder="Enter device type"
                                     value={deviceInfo.deviceType}
                                     onChange={(e) => setDeviceInfo({ ...deviceInfo, deviceType: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-md shadow-sm"
+                                    className="mt-1 w-full px-3 py-2 bg-gray-900 text-white border border-gray-600 rounded-md shadow-sm"
                                     required
                                 />
                             </div>
                             <div>
-                                <label htmlFor="batteryCapacity" className="block font-medium">Battery Capacity (kWh):</label>
+                                <label htmlFor="batteryCapacity" className="block font-medium text-white">Battery Capacity (kWh):</label>
                                 <input
                                     id="batteryCapacity"
                                     type="number"
                                     placeholder="Enter battery capacity"
                                     value={deviceInfo.batteryCapacity}
                                     onChange={(e) => setDeviceInfo({ ...deviceInfo, batteryCapacity: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-md shadow-sm"
+                                    className="mt-1 w-full px-3 py-2 bg-gray-900 text-white border border-gray-600 rounded-md shadow-sm"
                                     required
                                 />
                             </div>
-                            <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg">Connect</button>
+                            <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition">Connect</button>
                         </form>
                     ) : (
-                        <button className="w-full bg-gray-300 text-gray-500 py-2 px-4 rounded-lg" disabled>Not Available</button>
+                        <button className="w-full bg-gray-300 text-gray-500 py-2 px-4 rounded-lg cursor-not-allowed" disabled>Not Available</button>
                     )}
-                </div>
+                </motion.div>
             )}
         </div>
     );
