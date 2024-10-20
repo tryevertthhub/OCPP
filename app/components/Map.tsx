@@ -6,14 +6,29 @@ import styles from './Map.module.css';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGVqYW5mZXRvdnNraSIsImEiOiJjbTJkaWd5c3IxZHpkMmpyMnFoNmM5Mnh4In0.G7TWLfvTgQtdtROdDQJFcQ';
 
+
+interface OnChainData {
+    transactionHash: string;
+    timestamp: string;
+    blockNumber: number;
+    vppScanUrl: string;
+}
+
 interface Device {
-    id: number;
-    name: string;
-    latitude: number;
-    longitude: number;
-    details?: string; // Make details optional if not provided
-    zipCode: string,
-    power: number, // Ensure power is a number
+    id: string;
+    manufacturer: string;
+    model: string;
+    energyCapacity: string;
+    status: string;
+    firmwareVersion: string;
+    softwareVersion: string;
+    connectorType: string;
+    location: {
+        latitude: number;
+        longitude: number;
+        zipCode: string;
+    };
+    onChainData: OnChainData;
 }
 
 const Map = () => {
@@ -21,13 +36,24 @@ const Map = () => {
     const [map, setMap] = useState<mapboxgl.Map | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredDevices, setFilteredDevices] = useState<Device[]>([]);
-    const [deviceInfo, setDeviceInfo] = useState<{ name: string; lat: string; long: string; details: string, zipCode: string, power: number}>({
-        name: '',
+    const [deviceInfo, setDeviceInfo] = useState({
+        name: '', // Added 'name'
+        manufacturer: '',
+        model: '',
+        energyCapacity: '',
+        status: '',
+        firmwareVersion: '',
+        softwareVersion: '',
+        connectorType: '',
+        details: '', // Added 'details'
+        power: '', // Added 'power'
         lat: '',
         long: '',
-        details: '', // Ensure details is included in initial state
-        zipCode:'',
-        power: 0
+        zipCode: '',
+        transactionHash: '',
+        timestamp: '',
+        blockNumber: '',
+        vppScanUrl: ''
     });
 
     // Fetch devices from API
@@ -67,31 +93,34 @@ const Map = () => {
     
             // Add new markers
             devicesToShow.forEach(device => {
-                if (!isNaN(device.longitude) && !isNaN(device.latitude)) {
+                if (device.location && !isNaN(device.location.longitude) && !isNaN(device.location.latitude)) {
                     const popupContent = `
                         <div class="popup-content">
-                           <div class="popup-header">
-                              <h3 class="popup-title">${device.name}</h3>
-                           </div>
-                         <div class="popup-body">
-                            <p class="popup-details"><strong>Details:</strong> ${device.details || 'No additional details available.'}</p>
-                            <p class="popup-zip"><strong>Zip Code:</strong> ${device.zipCode || 'N/A'}</p>
-                            <p class="popup-power"><strong>Power:</strong> ${device.power} kW</p>
-                         </div>
+                            <div class="popup-header">
+                                <h3 class="popup-title">${device.manufacturer} - ${device.model}</h3>
+                            </div>
+                            <div class="popup-body">
+                                <p><strong>Status:</strong> ${device.status}</p>
+                                <p><strong>Energy Capacity:</strong> ${device.energyCapacity}</p>
+                                <p><strong>Connector Type:</strong> ${device.connectorType}</p>
+                                <p><strong>Firmware Version:</strong> ${device.firmwareVersion}</p>
+                                <p><strong>Software Version:</strong> ${device.softwareVersion}</p>
+                                <p><strong>Location:</strong> ${device.location.zipCode} (${device.location.latitude}, ${device.location.longitude})</p>
+                                <p><strong>On-chain Data:</strong> <a href="${device.onChainData.vppScanUrl}" target="_blank">${device.onChainData.transactionHash}</a></p>
+                            </div>
                         </div>
                     `;
     
                     new mapboxgl.Marker()
-                        .setLngLat([device.longitude, device.latitude])
+                        .setLngLat([device.location.longitude, device.location.latitude])
                         .setPopup(new mapboxgl.Popup().setHTML(popupContent))
                         .addTo(map);
                 } else {
-                    console.error(`Invalid coordinates for device ${device.name}: (${device.longitude}, ${device.latitude})`);
+                    console.error(`Invalid or missing location for device ${device.manufacturer} - ${device.model}`);
                 }
             });
         }
     };
-    
 
     // Initial markers on load
     useEffect(() => {
@@ -102,7 +131,7 @@ const Map = () => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchTerm(value);
-        setFilteredDevices(devices.filter(device => device.name.toLowerCase().includes(value.toLowerCase())));
+        setFilteredDevices(devices.filter(device => device.manufacturer.toLowerCase().includes(value.toLowerCase())));
     };
 
     // Form handling
@@ -113,52 +142,75 @@ const Map = () => {
 
     const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
-        // Convert lat and long to numbers
+        
+        // Parse lat, long, power values as numbers
         const latitude = parseFloat(deviceInfo.lat);
         const longitude = parseFloat(deviceInfo.long);
-
-        // Validate latitude and longitude
-        if (isNaN(latitude) || isNaN(longitude)) {
-            console.error("Invalid latitude or longitude");
-            return; // Prevent submission if lat/long is invalid
+        const power = parseFloat(deviceInfo.power); // Ensure 'power' is converted to a number
+    
+        if (isNaN(latitude) || isNaN(longitude) || isNaN(power)) {
+            console.error("Invalid latitude, longitude, or power");
+            return;
         }
-
+    
+        // Construct new device object with the correct data
         const newDevice = {
             name: deviceInfo.name,
-            latitude: latitude,  // Ensure lat is a number
-            longitude: longitude, // Ensure long is a number
-            details: deviceInfo.details || 'Connected',  // Use deviceInfo.details or default to 'Connected',
-            zipCode: deviceInfo.zipCode,
-            power: deviceInfo.power
+            manufacturer: deviceInfo.manufacturer,
+            model: deviceInfo.model,
+            energyCapacity: deviceInfo.energyCapacity,
+            status: deviceInfo.status,
+            firmwareVersion: deviceInfo.firmwareVersion,
+            softwareVersion: deviceInfo.softwareVersion,
+            connectorType: deviceInfo.connectorType,
+            location: {
+                latitude, // Latitude passed correctly
+                longitude, // Longitude passed correctly
+                zipCode: deviceInfo.zipCode // Ensure zipCode is passed correctly
+            },
+            details: deviceInfo.details,
+            power: power, // Power passed correctly
+            onChainData: {
+                transactionHash: deviceInfo.transactionHash || `0x${Math.random().toString(36).substr(2, 10)}`,
+                timestamp: deviceInfo.timestamp || new Date().toISOString(),
+                blockNumber: Number(deviceInfo.blockNumber) || Math.floor(Math.random() * 1000000),
+                vppScanUrl: deviceInfo.vppScanUrl || 'https://vppscan.com/tx/0xabc123'
+            }
         };
-
+       console.log(newDevice);
         try {
             const response = await fetch('/api/addDevice', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newDevice),
+                body: JSON.stringify(newDevice)
             });
-
+    
             if (response.ok) {
                 const addedDevice = await response.json();
-
-                // Ensure the response structure is correct
-                if (addedDevice && addedDevice.id) {
-                    // Update devices state to include the newly added device
-                    const updatedDevices = [...devices, addedDevice];
-                    setDevices(updatedDevices);
-                    setFilteredDevices(updatedDevices); // Update filtered devices as well
-
-                    // Add the new marker
-                    addMarkersToMap(updatedDevices);
-
-                    // Reset form fields
-                    setDeviceInfo({ name: '', lat: '', long: '', details: '', zipCode : '', power: 0 }); // Reset all fields
-                    console.log('Device added successfully:', addedDevice);
-                } else {
-                    console.error('Invalid device added:', addedDevice);
-                }
+                setDevices([...devices, addedDevice]);
+                setFilteredDevices([...devices, addedDevice]);
+                addMarkersToMap([...devices, addedDevice]);
+    
+                // Reset form fields after successful submission
+                setDeviceInfo({
+                    name: '',
+                    manufacturer: '',
+                    model: '',
+                    energyCapacity: '',
+                    status: '',
+                    firmwareVersion: '',
+                    softwareVersion: '',
+                    connectorType: '',
+                    details: '',
+                    power: '',
+                    lat: '',
+                    long: '',
+                    zipCode: '',
+                    transactionHash: '',
+                    timestamp: '',
+                    blockNumber: '',
+                    vppScanUrl: ''
+                });
             } else {
                 console.error('Failed to add device', response.statusText);
             }
@@ -166,118 +218,47 @@ const Map = () => {
             console.error('Error submitting form:', error);
         }
     };
-
-    // Handle clicking a device from the list
-    const handleDeviceClick = (device: Device) => {
-        if (map) {
-            map.flyTo({
-                center: [device.longitude, device.latitude],
-                zoom: 10, // Adjust the zoom level if needed
-                essential: true // This ensures the animation is considered essential with reduced motion
-            });
-
-            // Optionally, open the popup for the clicked device
-            new mapboxgl.Popup()
-            .setLngLat([device.longitude, device.latitude])
-            .setHTML(`
-                <div class="popup-content">
-                    <div class="popup-header">
-                        <h3 class="popup-title">${device.name}</h3>
-                    </div>
-                    <div class="popup-body">
-                        <p class="popup-details"><strong>Details:</strong> ${device.details || 'No additional details available.'}</p>
-                        <p class="popup-zip"><strong>Zip Code:</strong> ${device.zipCode || 'N/A'}</p>
-                        <p class="popup-power"><strong>Power:</strong> ${device.power} kW</p>
-                    </div>
-                </div>
-            `)
-            .addTo(map);
-        }
-    };
-
+    
+    
+    
     return (
         <div className={styles.container}>
             {/* Form at the top */}
             <form onSubmit={handleFormSubmit} className={styles.addDeviceForm}>
-                <h2 className={styles.title}>Add New Device</h2>
-                <input
-                    className={styles.input}
-                    name="name"
-                    placeholder="Device Name"
-                    value={deviceInfo.name}
-                    onChange={handleFormChange}
-                    required
-                />
-                <input
-                    className={styles.input}
-                    name="lat"
-                    placeholder="Latitude"
-                    type="number"
-                    value={deviceInfo.lat}
-                    onChange={handleFormChange}
-                    required
-                />
-                <input
-                    className={styles.input}
-                    name="long"
-                    placeholder="Longitude"
-                    type="number"
-                    value={deviceInfo.long}
-                    onChange={handleFormChange}
-                    required
-                />
-                <input
-                    className={styles.input}
-                    name="power"
-                    placeholder="Power"
-                    value={deviceInfo.power} // Controlled input
-                    onChange={handleFormChange}
-                    required
-                />
-                 <input
-                    className={styles.input}
-                    name="zipCode"
-                    placeholder="Zipcode"
-                    value={deviceInfo.zipCode} // Controlled input
-                    onChange={handleFormChange}
-                    required
-                />
-                 
-                <input
-                    className={styles.input}
-                    name="details"
-                    placeholder="Device Details"
-                    value={deviceInfo.details} // Controlled input
-                    onChange={handleFormChange}
-                    required
-                />
-                
+                <input className={styles.input} name="name" placeholder="Device Name" value={deviceInfo.name} onChange={handleFormChange} required />
+                <input className={styles.input} name="manufacturer" placeholder="Manufacturer" value={deviceInfo.manufacturer} onChange={handleFormChange} required />
+                <input className={styles.input} name="model" placeholder="Model" value={deviceInfo.model} onChange={handleFormChange} required />
+                <input className={styles.input} name="energyCapacity" placeholder="Energy Capacity" value={deviceInfo.energyCapacity} onChange={handleFormChange} required />
+                <input className={styles.input} name="status" placeholder="Status" value={deviceInfo.status} onChange={handleFormChange} required />
+                <input className={styles.input} name="firmwareVersion" placeholder="Firmware Version" value={deviceInfo.firmwareVersion} onChange={handleFormChange} required />
+                <input className={styles.input} name="softwareVersion" placeholder="Software Version" value={deviceInfo.softwareVersion} onChange={handleFormChange} required />
+                <input className={styles.input} name="connectorType" placeholder="Connector Type" value={deviceInfo.connectorType} onChange={handleFormChange} required />
+                <input className={styles.input} name="lat" placeholder="Latitude" type="number" value={deviceInfo.lat} onChange={handleFormChange} required />
+                <input className={styles.input} name="long" placeholder="Longitude" type="number" value={deviceInfo.long} onChange={handleFormChange} required />
+                <input className={styles.input} name="zipCode" placeholder="Zipcode" value={deviceInfo.zipCode} onChange={handleFormChange} required />
+                <input className={styles.input} name="power" placeholder="Power (kW)" type="number" value={deviceInfo.power} onChange={handleFormChange} required />
+                <input className={styles.input} name="details" placeholder="Details" value={deviceInfo.details} onChange={handleFormChange} />
                 <button type="submit" className={styles.submitBtn}>Add Device</button>
             </form>
 
+
+
+
             {/* Map and Device Info Panel */}
             <div className={styles.mapInfoContainer}>
-                {/* Map Section */}
                 <div className={styles.map}>
                     <div id="map" style={{ width: '100%', height: '100%' }} />
                 </div>
 
-                {/* Device Search & Connected Devices Info */}
                 <div className={styles.sidebar}>
-                    <input
-                        type="text"
-                        placeholder="Search devices..."
-                        value={searchTerm}
-                        onChange={handleInputChange}
-                        className={styles.searchInput}
-                    />
+                    <input type="text" placeholder="Search devices..." value={searchTerm} onChange={handleInputChange} className={styles.searchInput} />
                     {filteredDevices.length > 0 ? (
                         <ul className={styles.deviceList}>
                             {filteredDevices.map(device => (
-                                <li key={device.id} className={styles.deviceItem} onClick={() => handleDeviceClick(device)}>
+                                <li key={device.id} className={styles.deviceItem}>
                                     <div className={styles.deviceInfo}>
-                                        <h4>{device.name}</h4>
-                                        <p>{device.details || 'No details available'}</p>
+                                        <h4>{device.manufacturer} - {device.model}</h4>
+                                        <p>{device.status}</p>
                                     </div>
                                 </li>
                             ))}
