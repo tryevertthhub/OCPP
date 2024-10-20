@@ -57,7 +57,7 @@ const Map = () => {
     }, []);
 
     // Function to add markers to the map
-     const addMarkersToMap = (devicesToShow: Device[]) => {
+    const addMarkersToMap = (devicesToShow: Device[]) => {
         if (map) {
             // Clear existing markers first
             const markers = document.getElementsByClassName('mapboxgl-marker');
@@ -162,6 +162,29 @@ const Map = () => {
         }
     };
 
+    // Handle clicking a device from the list
+    const handleDeviceClick = (device: Device) => {
+        if (map) {
+            map.flyTo({
+                center: [device.longitude, device.latitude],
+                zoom: 10, // Adjust the zoom level if needed
+                essential: true // This ensures the animation is considered essential with reduced motion
+            });
+
+            // Optionally, open the popup for the clicked device
+            new mapboxgl.Popup()
+                .setLngLat([device.longitude, device.latitude])
+                .setHTML(`
+                    <div class="popup-content">
+                        <h3 class="popup-title">${device.name}</h3>
+                        <p class="popup-details">${device.details || 'No additional details available.'}</p>
+                        <p class="popup-zip"><strong>Zip Code:</strong> ${device.zipCode || 'N/A'}</p>
+                    </div>
+                `)
+                .addTo(map);
+        }
+    };
+
     return (
         <div className={styles.container}>
             {/* Form at the top */}
@@ -241,7 +264,7 @@ const Map = () => {
                     {filteredDevices.length > 0 ? (
                         <ul className={styles.deviceList}>
                             {filteredDevices.map(device => (
-                                <li key={device.id} className={styles.deviceItem}>
+                                <li key={device.id} className={styles.deviceItem} onClick={() => handleDeviceClick(device)}>
                                     <div className={styles.deviceInfo}>
                                         <h4>{device.name}</h4>
                                         <p>{device.details || 'No details available'}</p>
