@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from '../../components/Map.module.css';
-import { motion } from 'framer-motion'; // For animation
+import { motion } from 'framer-motion';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGVqYW5mZXRvdnNraSIsImEiOiJjbTJkaWd5c3IxZHpkMmpyMnFoNmM5Mnh4In0.G7TWLfvTgQtdtROdDQJFcQ';
 
@@ -84,7 +84,17 @@ const UserMap = () => {
             setMarkers([]);
 
             chargersToShow.forEach(charger => {
-                const marker = new mapboxgl.Marker()
+                const markerElement = document.createElement('div');
+                markerElement.className = 'custom-marker';
+
+                markerElement.style.backgroundColor = '#ff4e42';
+                markerElement.style.width = '20px';
+                markerElement.style.height = '20px';
+                markerElement.style.borderRadius = '50%';
+                markerElement.style.border = '2px solid white';
+                markerElement.style.cursor = 'pointer';
+
+                const marker = new mapboxgl.Marker({ element: markerElement })
                     .setLngLat([charger.location.longitude, charger.location.latitude])
                     .addTo(map);
 
@@ -125,67 +135,69 @@ const UserMap = () => {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: '100%' }}
                     transition={{ duration: 0.5 }}
-                    className="absolute top-4 right-4 p-6 w-96 bg-white/30 backdrop-blur-md shadow-lg rounded-lg text-white space-y-6"
+                    className="absolute top-4 right-4 w-full max-w-md bg-white/80 backdrop-blur-md shadow-lg rounded-lg p-6 space-y-6"
                 >
-                    <h2 className="text-3xl font-semibold text-blue-200">Charger Details</h2>
-                    <p><strong>Manufacturer:</strong> {selectedCharger.manufacturer}</p>
-                    <p><strong>Model:</strong> {selectedCharger.model}</p>
-                    <p><strong>Status:</strong> {selectedCharger.status}</p>
-                    <p><strong>Energy Capacity:</strong> {selectedCharger.energyCapacity}</p>
-                    <p><strong>Connector Type:</strong> {selectedCharger.connectorType}</p>
-                    <p><strong>Location:</strong> {selectedCharger.location.zipCode} ({selectedCharger.location.latitude}, {selectedCharger.location.longitude})</p>
+                    <h2 className="text-3xl font-bold text-blue-500">Charger Details</h2>
+                    <div className="p-4 shadow-sm bg-gray-50 rounded-lg space-y-2">
+                        <p className="font-semibold text-gray-700"><strong>Manufacturer:</strong> {selectedCharger.manufacturer}</p>
+                        <p className="font-semibold text-gray-700"><strong>Model:</strong> {selectedCharger.model}</p>
+                        <p className="text-gray-500"><strong>Status:</strong> {selectedCharger.status}</p>
+                        <p className="text-gray-500"><strong>Energy Capacity:</strong> {selectedCharger.energyCapacity}</p>
+                        <p className="text-gray-500"><strong>Connector Type:</strong> {selectedCharger.connectorType}</p>
+                        <p className="text-gray-500"><strong>Location:</strong> {selectedCharger.location.zipCode} ({selectedCharger.location.latitude}, {selectedCharger.location.longitude})</p>
+                    </div>
 
                     {selectedCharger.status === 'Available' ? (
-                        <form onSubmit={handleFormSubmit} className="space-y-4">
+                        <form onSubmit={handleFormSubmit} className="mt-4 space-y-4">
                             <div>
-                                <label htmlFor="chargeAmount" className="block font-medium text-white">Charge Amount (kWh):</label>
+                                <label htmlFor="chargeAmount" className="block font-medium text-gray-700">Charge Amount (kWh):</label>
                                 <input
                                     id="chargeAmount"
                                     type="number"
                                     placeholder="Enter amount"
                                     value={chargeAmount}
                                     onChange={(e) => setChargeAmount(e.target.value)}
-                                    className="mt-1 w-full px-3 py-2 bg-gray-900 text-white border border-gray-600 rounded-md shadow-sm"
+                                    className="mt-1 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                     required
                                 />
                             </div>
                             <div>
-                                <label htmlFor="deviceName" className="block font-medium text-white">Device Name:</label>
+                                <label htmlFor="deviceName" className="block font-medium text-gray-700">Device Name:</label>
                                 <input
                                     id="deviceName"
                                     type="text"
                                     placeholder="Enter your device name"
                                     value={deviceInfo.deviceName}
                                     onChange={(e) => setDeviceInfo({ ...deviceInfo, deviceName: e.target.value })}
-                                    className="mt-1 w-full px-3 py-2 bg-gray-900 text-white border border-gray-600 rounded-md shadow-sm"
+                                    className="mt-1 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                     required
                                 />
                             </div>
                             <div>
-                                <label htmlFor="deviceType" className="block font-medium text-white">Device Type:</label>
+                                <label htmlFor="deviceType" className="block font-medium text-gray-700">Device Type:</label>
                                 <input
                                     id="deviceType"
                                     type="text"
                                     placeholder="Enter device type"
                                     value={deviceInfo.deviceType}
                                     onChange={(e) => setDeviceInfo({ ...deviceInfo, deviceType: e.target.value })}
-                                    className="mt-1 w-full px-3 py-2 bg-gray-900 text-white border border-gray-600 rounded-md shadow-sm"
+                                    className="mt-1 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                     required
                                 />
                             </div>
                             <div>
-                                <label htmlFor="batteryCapacity" className="block font-medium text-white">Battery Capacity (kWh):</label>
+                                <label htmlFor="batteryCapacity" className="block font-medium text-gray-700">Battery Capacity (kWh):</label>
                                 <input
                                     id="batteryCapacity"
                                     type="number"
                                     placeholder="Enter battery capacity"
                                     value={deviceInfo.batteryCapacity}
                                     onChange={(e) => setDeviceInfo({ ...deviceInfo, batteryCapacity: e.target.value })}
-                                    className="mt-1 w-full px-3 py-2 bg-gray-900 text-white border border-gray-600 rounded-md shadow-sm"
+                                    className="mt-1 w-full px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                     required
                                 />
                             </div>
-                            <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition">Connect</button>
+                            <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg shadow-lg hover:bg-blue-700 transition">Connect</button>
                         </form>
                     ) : (
                         <button className="w-full bg-gray-300 text-gray-500 py-2 px-4 rounded-lg cursor-not-allowed" disabled>Not Available</button>
