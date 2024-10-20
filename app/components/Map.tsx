@@ -2,10 +2,9 @@
 import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import styles from './Map.module.css';
+import { motion } from 'framer-motion';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGVqYW5mZXRvdnNraSIsImEiOiJjbTJkaWd5c3IxZHpkMmpyMnFoNmM5Mnh4In0.G7TWLfvTgQtdtROdDQJFcQ';
-
 
 interface OnChainData {
     transactionHash: string;
@@ -37,7 +36,7 @@ const Map = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredDevices, setFilteredDevices] = useState<Device[]>([]);
     const [deviceInfo, setDeviceInfo] = useState({
-        name: '', // Added 'name'
+        name: '',
         manufacturer: '',
         model: '',
         energyCapacity: '',
@@ -45,8 +44,8 @@ const Map = () => {
         firmwareVersion: '',
         softwareVersion: '',
         connectorType: '',
-        details: '', // Added 'details'
-        power: '', // Added 'power'
+        details: '',
+        power: '',
         lat: '',
         long: '',
         zipCode: '',
@@ -56,7 +55,7 @@ const Map = () => {
         vppScanUrl: ''
     });
     const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
-    // Fetch devices from API
+
     useEffect(() => {
         const fetchDevices = async () => {
             try {
@@ -65,7 +64,7 @@ const Map = () => {
                 setDevices(data);
                 setFilteredDevices(data);
             } catch (error) {
-                console.error("Error fetching devices:", error);
+                console.error('Error fetching devices:', error);
             }
         };
 
@@ -82,30 +81,21 @@ const Map = () => {
         return () => mapboxMap.remove();
     }, []);
 
-    
-    // Function to add markers to the map
- const addMarkersToMap = (devicesToShow: Device[]) => {
+    const addMarkersToMap = (devicesToShow: Device[]) => {
         if (map) {
-            // Clear existing markers first
             markers.forEach(marker => marker.remove());
             const newMarkers: mapboxgl.Marker[] = [];
 
-            // Add new markers
             devicesToShow.forEach(device => {
                 if (device.location && !isNaN(device.location.longitude) && !isNaN(device.location.latitude)) {
                     const popupContent = `
-                        <div class="${styles.popupContent}">
-                            <h3 class="${styles.popupTitle}">${device.manufacturer} - ${device.model}</h3>
-                            <div class="${styles.popupDetails}">
+                        <div class="popup-content">
+                            <h3>${device.manufacturer} - ${device.model}</h3>
+                            <div>
                                 <p><strong>Status:</strong> ${device.status}</p>
                                 <p><strong>Energy Capacity:</strong> ${device.energyCapacity}</p>
                                 <p><strong>Connector Type:</strong> ${device.connectorType}</p>
-                                <p><strong>Firmware Version:</strong> ${device.firmwareVersion}</p>
-                                <p><strong>Software Version:</strong> ${device.softwareVersion}</p>
                                 <p><strong>Location:</strong> ${device.location.zipCode} (${device.location.latitude}, ${device.location.longitude})</p>
-                                <p><strong>On-chain Data:</strong> <a href="${device.onChainData.vppScanUrl}" target="_blank">${device.onChainData.transactionHash}</a></p>
-                                <p><strong>Block Number:</strong> ${device.onChainData.blockNumber}</p>
-                                <p><strong>Timestamp:</strong> ${new Date(device.onChainData.timestamp).toLocaleString()}</p>
                             </div>
                         </div>
                     `;
@@ -125,19 +115,16 @@ const Map = () => {
         }
     };
 
-    // Initial markers on load
     useEffect(() => {
         addMarkersToMap(filteredDevices);
     }, [map, filteredDevices]);
 
-    // Search functionality
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchTerm(value);
         setFilteredDevices(devices.filter(device => device.manufacturer.toLowerCase().includes(value.toLowerCase())));
     };
 
-    // Form handling
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setDeviceInfo(prev => ({ ...prev, [name]: value }));
@@ -145,18 +132,16 @@ const Map = () => {
 
     const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        
-        // Parse lat, long, power values as numbers
+
         const latitude = parseFloat(deviceInfo.lat);
         const longitude = parseFloat(deviceInfo.long);
-        const power = parseFloat(deviceInfo.power); // Ensure 'power' is converted to a number
-    
+        const power = parseFloat(deviceInfo.power);
+
         if (isNaN(latitude) || isNaN(longitude) || isNaN(power)) {
-            console.error("Invalid latitude, longitude, or power");
+            console.error('Invalid latitude, longitude, or power');
             return;
         }
-    
-        // Construct new device object with the correct data
+
         const newDevice = {
             name: deviceInfo.name,
             manufacturer: deviceInfo.manufacturer,
@@ -167,12 +152,12 @@ const Map = () => {
             softwareVersion: deviceInfo.softwareVersion,
             connectorType: deviceInfo.connectorType,
             location: {
-                latitude, // Latitude passed correctly
-                longitude, // Longitude passed correctly
-                zipCode: deviceInfo.zipCode // Ensure zipCode is passed correctly
+                latitude,
+                longitude,
+                zipCode: deviceInfo.zipCode
             },
             details: deviceInfo.details,
-            power: power, // Power passed correctly
+            power,
             onChainData: {
                 transactionHash: deviceInfo.transactionHash || `0x${Math.random().toString(36).substr(2, 10)}`,
                 timestamp: deviceInfo.timestamp || new Date().toISOString(),
@@ -180,21 +165,20 @@ const Map = () => {
                 vppScanUrl: deviceInfo.vppScanUrl || 'https://vppscan.com/tx/0xabc123'
             }
         };
-       console.log(newDevice);
+
         try {
             const response = await fetch('/api/addDevice', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newDevice)
             });
-    
+
             if (response.ok) {
                 const addedDevice = await response.json();
                 setDevices([...devices, addedDevice]);
                 setFilteredDevices([...devices, addedDevice]);
                 addMarkersToMap([...devices, addedDevice]);
-    
-                // Reset form fields after successful submission
+
                 setDeviceInfo({
                     name: '',
                     manufacturer: '',
@@ -221,9 +205,9 @@ const Map = () => {
             console.error('Error submitting form:', error);
         }
     };
-    
-    // When a device in the list is clicked, zoom into its location and show its popup
-    const handleDeviceClick = (device: Device) => {
+
+     // When a device in the list is clicked, zoom into its location and show its popup
+     const handleDeviceClick = (device: Device) => {
         if (map && device.location) {
             // Fly to the selected device location on the map
             map.flyTo({
@@ -242,54 +226,65 @@ const Map = () => {
             }
         }
     };
-    
+
     return (
-        <div className={styles.container}>
-            {/* Form at the top */}
-            <form onSubmit={handleFormSubmit} className={styles.addDeviceForm}>
-                <input className={styles.input} name="name" placeholder="Device Name" value={deviceInfo.name} onChange={handleFormChange} required />
-                <input className={styles.input} name="manufacturer" placeholder="Manufacturer" value={deviceInfo.manufacturer} onChange={handleFormChange} required />
-                <input className={styles.input} name="model" placeholder="Model" value={deviceInfo.model} onChange={handleFormChange} required />
-                <input className={styles.input} name="energyCapacity" placeholder="Energy Capacity" value={deviceInfo.energyCapacity} onChange={handleFormChange} required />
-                <input className={styles.input} name="status" placeholder="Status" value={deviceInfo.status} onChange={handleFormChange} required />
-                <input className={styles.input} name="firmwareVersion" placeholder="Firmware Version" value={deviceInfo.firmwareVersion} onChange={handleFormChange} required />
-                <input className={styles.input} name="softwareVersion" placeholder="Software Version" value={deviceInfo.softwareVersion} onChange={handleFormChange} required />
-                <input className={styles.input} name="connectorType" placeholder="Connector Type" value={deviceInfo.connectorType} onChange={handleFormChange} required />
-                <input className={styles.input} name="lat" placeholder="Latitude" type="number" value={deviceInfo.lat} onChange={handleFormChange} required />
-                <input className={styles.input} name="long" placeholder="Longitude" type="number" value={deviceInfo.long} onChange={handleFormChange} required />
-                <input className={styles.input} name="zipCode" placeholder="Zipcode" value={deviceInfo.zipCode} onChange={handleFormChange} required />
-                <input className={styles.input} name="power" placeholder="Power (kW)" type="number" value={deviceInfo.power} onChange={handleFormChange} required />
-                <input className={styles.input} name="details" placeholder="Details" value={deviceInfo.details} onChange={handleFormChange} />
-                <button type="submit" className={styles.submitBtn}>Add Charger</button>
-            </form>
+        <div className="relative h-screen w-full">
+            <div id="map" className="absolute inset-0 w-full h-full"></div>
 
+            {/* Reduced size for form panel on the left */}
+            <motion.div
+                initial={{ opacity: 0, x: '-100%' }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: '-100%' }}
+                className="absolute top-10  left-5 w-full max-w-xs bg-white bg-opacity-80 backdrop-blur-md p-4 shadow-md rounded-r-lg"
+            >
+                <h2 className="text-xl font-bold mb-4">Add New Charger</h2>
+                <form onSubmit={handleFormSubmit} className="space-y-2">
+                    <input className="w-full p-2 border rounded" name="name" placeholder="Device Name" value={deviceInfo.name} onChange={handleFormChange} required />
+                    <input className="w-full p-2 border rounded" name="manufacturer" placeholder="Manufacturer" value={deviceInfo.manufacturer} onChange={handleFormChange} required />
+                    <input className="w-full p-2 border rounded" name="model" placeholder="Model" value={deviceInfo.model} onChange={handleFormChange} required />
+                    <input className="w-full p-2 border rounded" name="energyCapacity" placeholder="Energy Capacity" value={deviceInfo.energyCapacity} onChange={handleFormChange} required />
+                    <input className="w-full p-2 border rounded" name="status" placeholder="Status" value={deviceInfo.status} onChange={handleFormChange} required />
+                    <input className="w-full p-2 border rounded" name="firmwareVersion" placeholder="Firmware Version" value={deviceInfo.firmwareVersion} onChange={handleFormChange} required />
+                    <input className="w-full p-2 border rounded" name="softwareVersion" placeholder="Software Version" value={deviceInfo.softwareVersion} onChange={handleFormChange} required />
+                    <input className="w-full p-2 border rounded" name="connectorType" placeholder="Connector Type" value={deviceInfo.connectorType} onChange={handleFormChange} required />
+                    <input className="w-full p-2 border rounded" name="lat" placeholder="Latitude" type="number" value={deviceInfo.lat} onChange={handleFormChange} required />
+                    <input className="w-full p-2 border rounded" name="long" placeholder="Longitude" type="number" value={deviceInfo.long} onChange={handleFormChange} required />
+                    <input className="w-full p-2 border rounded" name="zipCode" placeholder="Zipcode" value={deviceInfo.zipCode} onChange={handleFormChange} required />
+                    <input className="w-full p-2 border rounded" name="power" placeholder="Power (kW)" type="number" value={deviceInfo.power} onChange={handleFormChange} required />
+                    <input className="w-full p-2 border rounded" name="details" placeholder="Details" value={deviceInfo.details} onChange={handleFormChange} />
+                    <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded">Add Charger</button>
+                </form>
+            </motion.div>
 
-
-
-            {/* Map and Device Info Panel */}
-            <div className={styles.mapInfoContainer}>
-                <div className={styles.map}>
-                    <div id="map" style={{ width: '100%', height: '100%' }} />
-                </div>
-
-                <div className={styles.sidebar}>
-                    <input type="text" placeholder="Search chargers..." value={searchTerm} onChange={handleInputChange} className={styles.searchInput} />
-                    {filteredDevices.length > 0 ? (
-                        <ul className={styles.deviceList}>
-                            {filteredDevices.map(device => (
-                                 <li key={device.id} className={styles.deviceItem} onClick={() => handleDeviceClick(device)}>
-                                    <div className={styles.deviceInfo}>
-                                        <h4>{device.manufacturer} - {device.model}</h4>
-                                        <p>{device.status}</p>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <p className={styles.noDevices}>No devices found.</p>
-                    )}
-                </div>
-            </div>
+            {/* Device List panel on the right */}
+            <motion.div
+                initial={{ opacity: 0, x: '100%' }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: '100%' }}
+                className="absolute top-10 right-10 w-full max-w-sm bg-white bg-opacity-80 backdrop-blur-md p-6 shadow-md rounded-l-lg"
+            >
+                <h3 className="text-2xl font-semibold mb-4">All Chargers</h3>
+                <input
+                    type="text"
+                    placeholder="Search chargers..."
+                    value={searchTerm}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded mb-4"
+                />
+                <ul className="space-y-2">
+                    {filteredDevices.map(device => (
+                        <li
+                            key={device.id}
+                            className="bg-gray-100 p-3 rounded cursor-pointer hover:bg-gray-200"
+                            onClick={() => handleDeviceClick(device)}
+                        >
+                            <h4 className="text-lg font-semibold">{device.manufacturer} - {device.model}</h4>
+                            <p>{device.status}</p>
+                        </li>
+                    ))}
+                </ul>
+            </motion.div>
         </div>
     );
 };
