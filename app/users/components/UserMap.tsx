@@ -60,9 +60,9 @@ const UserMap = () => {
 
         if (!map) {
             const mapboxMap = new mapboxgl.Map({
-                container: 'map',
-                center: [0, 0],
-                zoom: 2,
+                container: 'map', 
+                center: [0, 0], 
+                zoom: 2, 
             });
 
             mapboxMap.on('load', () => {
@@ -135,10 +135,13 @@ const UserMap = () => {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: '100%' }}
                     transition={{ duration: 0.5 }}
-                    className="absolute top-4 right-4 w-full max-w-md bg-white/80 backdrop-blur-md shadow-lg rounded-lg p-6 space-y-6"
+                    className="absolute top-4 right-4 w-full max-w-md bg-white/60 backdrop-blur-lg border border-gray-200 shadow-lg rounded-lg p-6 space-y-6"
+                    style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.5)', // Add more transparency
+                    }}
                 >
                     <h2 className="text-3xl font-bold text-blue-500">Charger Details</h2>
-                    <div className="p-4 shadow-sm bg-gray-50 rounded-lg space-y-2">
+                    <div className="p-4 shadow-sm bg-gray-100/80 rounded-lg space-y-2">
                         <p className="font-semibold text-gray-700"><strong>Manufacturer:</strong> {selectedCharger.manufacturer}</p>
                         <p className="font-semibold text-gray-700"><strong>Model:</strong> {selectedCharger.model}</p>
                         <p className="text-gray-500"><strong>Status:</strong> {selectedCharger.status}</p>
