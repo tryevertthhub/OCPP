@@ -71,7 +71,6 @@ const Map = () => {
                     const popupContent = `
                         <div class="popup-content">
                            <div class="popup-header">
-                              <img src="/images/device-icon.png" alt="Device Icon" class="popup-icon" />
                               <h3 class="popup-title">${device.name}</h3>
                            </div>
                          <div class="popup-body">
@@ -183,7 +182,6 @@ const Map = () => {
             .setHTML(`
                 <div class="popup-content">
                     <div class="popup-header">
-                        <img src="/images/device-icon.png" alt="Device Icon" class="popup-icon" />
                         <h3 class="popup-title">${device.name}</h3>
                     </div>
                     <div class="popup-body">
