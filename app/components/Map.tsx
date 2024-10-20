@@ -225,7 +225,7 @@ const Map = () => {
         <div className={styles.container}>
             {/* Form at the top */}
             <form onSubmit={handleFormSubmit} className={styles.addDeviceForm}>
-                <input className={styles.input} name="name" placeholder="Device Name" value={deviceInfo.name} onChange={handleFormChange} required />
+                <input className={styles.input} name="name" placeholder="Charger Name" value={deviceInfo.name} onChange={handleFormChange} required />
                 <input className={styles.input} name="manufacturer" placeholder="Manufacturer" value={deviceInfo.manufacturer} onChange={handleFormChange} required />
                 <input className={styles.input} name="model" placeholder="Model" value={deviceInfo.model} onChange={handleFormChange} required />
                 <input className={styles.input} name="energyCapacity" placeholder="Energy Capacity" value={deviceInfo.energyCapacity} onChange={handleFormChange} required />
