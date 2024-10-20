@@ -173,15 +173,21 @@ const Map = () => {
 
             // Optionally, open the popup for the clicked device
             new mapboxgl.Popup()
-                .setLngLat([device.longitude, device.latitude])
-                .setHTML(`
-                    <div class="popup-content">
+            .setLngLat([device.longitude, device.latitude])
+            .setHTML(`
+                <div class="popup-content">
+                    <div class="popup-header">
+                        <img src="/images/device-icon.png" alt="Device Icon" class="popup-icon" />
                         <h3 class="popup-title">${device.name}</h3>
-                        <p class="popup-details">${device.details || 'No additional details available.'}</p>
-                        <p class="popup-zip"><strong>Zip Code:</strong> ${device.zipCode || 'N/A'}</p>
                     </div>
-                `)
-                .addTo(map);
+                    <div class="popup-body">
+                        <p class="popup-details"><strong>Details:</strong> ${device.details || 'No additional details available.'}</p>
+                        <p class="popup-zip"><strong>Zip Code:</strong> ${device.zipCode || 'N/A'}</p>
+                        <p class="popup-power"><strong>Power:</strong> ${device.power} kW</p>
+                    </div>
+                </div>
+            `)
+            .addTo(map);
         }
     };
 
