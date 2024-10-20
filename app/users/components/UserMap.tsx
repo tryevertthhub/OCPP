@@ -85,6 +85,14 @@ const UserMap = () => {
         };
     }, [map]);
 
+    const handleZoomIn = () => {
+        if (map) map.zoomIn();
+    };
+
+    const handleZoomOut = () => {
+        if (map) map.zoomOut();
+    };
+    
     // Function to add markers to the map
     const addMarkersToMap = (chargersToShow: Charger[]) => {
         if (map) {
@@ -120,6 +128,7 @@ const UserMap = () => {
         if (map && filteredChargers.length > 0) {
             addMarkersToMap(filteredChargers);
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [map, filteredChargers]);
 
     // Handle form submission for charging
@@ -177,6 +186,23 @@ const UserMap = () => {
     return (
         <div className="relative h-screen w-full">
             <div id="map" className="absolute inset-0 w-full h-full" />
+
+            {/* Zoom control buttons */}
+            <div className="absolute bottom-5 right-10 bottom-5 flex space-x-4 bg-white bg-opacity-80 backdrop-blur-md rounded-full">
+                <button
+                    className="bg-transparent text-blue-500 p-2 rounded-full shadow-md transition-all text-2xl hover:text-blue-700"
+                    onClick={handleZoomIn}
+                >
+                    +
+                </button>
+
+                <button
+                    className="bg-transparent text-blue-500 p-2 rounded-full shadow-md transition-all text-2xl hover:text-blue-700"
+                    onClick={handleZoomOut}
+                >
+                    -
+                </button>
+            </div>
 
             {selectedCharger && (
                 <>
