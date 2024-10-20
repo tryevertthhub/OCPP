@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from '../../components/Map.module.css';
-
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGVqYW5mZXRvdnNraSIsImEiOiJjbTJkaWd5c3IxZHpkMmpyMnFoNmM5Mnh4In0.G7TWLfvTgQtdtROdDQJFcQ';
+
 
 interface OnChainData {
     transactionHash: string;
@@ -60,8 +60,8 @@ const UserMap = () => {
 
         if (!map) {
             const mapboxMap = new mapboxgl.Map({
-                container: 'map', 
-                center: [0, 0], 
+                container: 'map', // Ensure container has the correct ID
+                center: [0, 0], // Initial position [lng, lat]
                 zoom: 2, 
             });
 
@@ -77,7 +77,7 @@ const UserMap = () => {
 
         return () => {
             if (map) {
-                map.remove(); 
+                map.remove();
             }
         };
     }, [map]);
@@ -89,19 +89,8 @@ const UserMap = () => {
             setMarkers([]);
 
             chargersToShow.forEach(charger => {
-                const popupContent = `
-                    <div class="p-2 text-sm font-medium">
-                        <h3 class="text-lg font-semibold text-blue-600">${charger.manufacturer} - ${charger.model}</h3>
-                        <p><strong>Status:</strong> ${charger.status}</p>
-                        <p><strong>Energy Capacity:</strong> ${charger.energyCapacity}</p>
-                        <p><strong>Connector Type:</strong> ${charger.connectorType}</p>
-                        <p><strong>Location:</strong> ${charger.location.zipCode} (${charger.location.latitude}, ${charger.location.longitude})</p>
-                    </div>
-                `;
-
                 const marker = new mapboxgl.Marker()
                     .setLngLat([charger.location.longitude, charger.location.latitude])
-                    .setPopup(new mapboxgl.Popup().setHTML(popupContent))
                     .addTo(map);
 
                 marker.getElement().addEventListener('click', () => {
@@ -133,15 +122,14 @@ const UserMap = () => {
     };
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 h-screen">
-            <div className="lg:w-2/3 w-full h-full relative border rounded-lg shadow">
-                {/* Ensure the map height is 100% */}
-                <div id="map" className="w-full h-full rounded-lg" />
-            </div>
+        <div className="relative w-full h-screen"> {/* Full screen height for the map */}
+            {/* Map container */}
+            <div id="map" className="w-full h-full" /> {/* 100% height for the map */}
 
+            {/* UI Panel, visible only when a charger is selected */}
             {selectedCharger && (
-                <div className="lg:w-1/3 w-full bg-white p-6 shadow-md rounded-lg">
-                    <h2 className="text-2xl font-bold mb-4">Charger Details</h2>
+                <div className="absolute top-8 right-8 bg-white shadow-lg p-4 rounded-lg w-96 z-10">
+                    <h2 className="text-xl font-semibold mb-2">Charger Details</h2>
                     <p><strong>Manufacturer:</strong> {selectedCharger.manufacturer}</p>
                     <p><strong>Model:</strong> {selectedCharger.model}</p>
                     <p><strong>Status:</strong> {selectedCharger.status}</p>
@@ -152,57 +140,57 @@ const UserMap = () => {
                     {selectedCharger.status === 'Available' ? (
                         <form onSubmit={handleFormSubmit} className="mt-4 space-y-4">
                             <div>
-                                <label htmlFor="chargeAmount" className="block font-medium text-gray-700">Charge Amount (kWh):</label>
+                                <label htmlFor="chargeAmount" className="block font-medium">Charge Amount (kWh):</label>
                                 <input
                                     id="chargeAmount"
                                     type="number"
                                     placeholder="Enter amount"
                                     value={chargeAmount}
                                     onChange={(e) => setChargeAmount(e.target.value)}
-                                    className="mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-3 py-2 border rounded-md shadow-sm"
                                     required
                                 />
                             </div>
                             <div>
-                                <label htmlFor="deviceName" className="block font-medium text-gray-700">Device Name:</label>
+                                <label htmlFor="deviceName" className="block font-medium">Device Name:</label>
                                 <input
                                     id="deviceName"
                                     type="text"
                                     placeholder="Enter your device name"
                                     value={deviceInfo.deviceName}
                                     onChange={(e) => setDeviceInfo({ ...deviceInfo, deviceName: e.target.value })}
-                                    className="mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-3 py-2 border rounded-md shadow-sm"
                                     required
                                 />
                             </div>
                             <div>
-                                <label htmlFor="deviceType" className="block font-medium text-gray-700">Device Type:</label>
+                                <label htmlFor="deviceType" className="block font-medium">Device Type:</label>
                                 <input
                                     id="deviceType"
                                     type="text"
                                     placeholder="Enter device type (e.g., EV model)"
                                     value={deviceInfo.deviceType}
                                     onChange={(e) => setDeviceInfo({ ...deviceInfo, deviceType: e.target.value })}
-                                    className="mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-3 py-2 border rounded-md shadow-sm"
                                     required
                                 />
                             </div>
                             <div>
-                                <label htmlFor="batteryCapacity" className="block font-medium text-gray-700">Battery Capacity (kWh):</label>
+                                <label htmlFor="batteryCapacity" className="block font-medium">Battery Capacity (kWh):</label>
                                 <input
                                     id="batteryCapacity"
                                     type="number"
                                     placeholder="Enter battery capacity"
                                     value={deviceInfo.batteryCapacity}
                                     onChange={(e) => setDeviceInfo({ ...deviceInfo, batteryCapacity: e.target.value })}
-                                    className="mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-3 py-2 border rounded-md shadow-sm"
                                     required
                                 />
                             </div>
-                            <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Connect</button>
+                            <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg">Connect</button>
                         </form>
                     ) : (
-                        <button className="w-full bg-gray-300 text-gray-500 py-2 px-4 rounded-lg cursor-not-allowed" disabled>Not Available</button>
+                        <button className="w-full bg-gray-300 text-gray-500 py-2 px-4 rounded-lg" disabled>Not Available</button>
                     )}
                 </div>
             )}
