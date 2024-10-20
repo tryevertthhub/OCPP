@@ -55,7 +55,7 @@ const Map = () => {
         blockNumber: '',
         vppScanUrl: ''
     });
-
+    const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
     // Fetch devices from API
     useEffect(() => {
         const fetchDevices = async () => {
@@ -82,6 +82,7 @@ const Map = () => {
         return () => mapboxMap.remove();
     }, []);
 
+    
     // Function to add markers to the map
     const addMarkersToMap = (devicesToShow: Device[]) => {
         if (map) {
@@ -219,13 +220,32 @@ const Map = () => {
         }
     };
     
-    
+    // When a device in the list is clicked, zoom into its location and show its popup
+    const handleDeviceClick = (device: Device) => {
+        if (map && device.location) {
+            // Fly to the selected device location on the map
+            map.flyTo({
+                center: [device.location.longitude, device.location.latitude],
+                zoom: 14,
+                essential: true // this ensures the animation is smooth and not interrupted
+            });
+
+            // Find the corresponding marker and show the popup
+            const deviceMarker = markers.find(marker =>
+                marker.getLngLat().lng === device.location.longitude && marker.getLngLat().lat === device.location.latitude
+            );
+
+            if (deviceMarker) {
+                deviceMarker.getPopup()?.addTo(map); // Show the popup for the selected marker
+            }
+        }
+    };
     
     return (
         <div className={styles.container}>
             {/* Form at the top */}
             <form onSubmit={handleFormSubmit} className={styles.addDeviceForm}>
-                <input className={styles.input} name="name" placeholder="Charger Name" value={deviceInfo.name} onChange={handleFormChange} required />
+                <input className={styles.input} name="name" placeholder="Device Name" value={deviceInfo.name} onChange={handleFormChange} required />
                 <input className={styles.input} name="manufacturer" placeholder="Manufacturer" value={deviceInfo.manufacturer} onChange={handleFormChange} required />
                 <input className={styles.input} name="model" placeholder="Model" value={deviceInfo.model} onChange={handleFormChange} required />
                 <input className={styles.input} name="energyCapacity" placeholder="Energy Capacity" value={deviceInfo.energyCapacity} onChange={handleFormChange} required />
@@ -255,7 +275,7 @@ const Map = () => {
                     {filteredDevices.length > 0 ? (
                         <ul className={styles.deviceList}>
                             {filteredDevices.map(device => (
-                                <li key={device.id} className={styles.deviceItem}>
+                                 <li key={device.id} className={styles.deviceItem} onClick={() => handleDeviceClick(device)}>
                                     <div className={styles.deviceInfo}>
                                         <h4>{device.manufacturer} - {device.model}</h4>
                                         <p>{device.status}</p>
