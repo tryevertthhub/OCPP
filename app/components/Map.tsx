@@ -84,14 +84,12 @@ const Map = () => {
 
     
     // Function to add markers to the map
-    const addMarkersToMap = (devicesToShow: Device[]) => {
+ const addMarkersToMap = (devicesToShow: Device[]) => {
         if (map) {
             // Clear existing markers first
-            const markers = document.getElementsByClassName('mapboxgl-marker');
-            while (markers[0]) {
-                markers[0].remove();
-            }
-    
+            markers.forEach(marker => marker.remove());
+            const newMarkers: mapboxgl.Marker[] = [];
+
             // Add new markers
             devicesToShow.forEach(device => {
                 if (device.location && !isNaN(device.location.longitude) && !isNaN(device.location.latitude)) {
@@ -111,15 +109,19 @@ const Map = () => {
                             </div>
                         </div>
                     `;
-    
-                    new mapboxgl.Marker()
+
+                    const marker = new mapboxgl.Marker()
                         .setLngLat([device.location.longitude, device.location.latitude])
                         .setPopup(new mapboxgl.Popup().setHTML(popupContent))
                         .addTo(map);
+
+                    newMarkers.push(marker);
                 } else {
                     console.error(`Invalid or missing location for device ${device.manufacturer} - ${device.model}`);
                 }
             });
+
+            setMarkers(newMarkers);
         }
     };
 
