@@ -1,11 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import styles from '../../components/Map.module.css'; // Ensure this CSS file is correctly linked
+import styles from '../../components/Map.module.css';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGVqYW5mZXRvdnNraSIsImEiOiJjbTJkaWd5c3IxZHpkMmpyMnFoNmM5Mnh4In0.G7TWLfvTgQtdtROdDQJFcQ';
-
 
 interface OnChainData {
     transactionHash: string;
@@ -41,6 +41,7 @@ const UserMap = () => {
         deviceType: '',
         batteryCapacity: '',
     });
+    const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
 
     // Fetch chargers from API
     useEffect(() => {
@@ -57,40 +58,44 @@ const UserMap = () => {
 
         fetchChargers();
 
-        // Ensure the map container exists before initializing
-        if (!map && document.getElementById('map')) {
+        if (!map) {
             const mapboxMap = new mapboxgl.Map({
-                container: 'map',
-                style: 'mapbox://styles/mapbox/streets-v11', // Ensure style is valid
-                center: [0, 0],
-                zoom: 2,
+                container: 'map', 
+                center: [0, 0], 
+                zoom: 2, 
             });
 
-            // Wait until the map is loaded before setting it
             mapboxMap.on('load', () => {
+                console.log('Map loaded successfully.');
                 setMap(mapboxMap);
+            });
+
+            mapboxMap.on('error', (e) => {
+                console.error('Mapbox error:', e);
             });
         }
 
-        return () => map?.remove();
+        return () => {
+            if (map) {
+                map.remove(); 
+            }
+        };
     }, [map]);
 
     // Function to add markers to the map
     const addMarkersToMap = (chargersToShow: Charger[]) => {
         if (map) {
+            markers.forEach(marker => marker.remove());
+            setMarkers([]);
+
             chargersToShow.forEach(charger => {
                 const popupContent = `
-                    <div class="${styles.popupContent}">
-                        <h3 class="${styles.popupTitle}">${charger.manufacturer} - ${charger.model}</h3>
-                        <div class="${styles.popupDetails}">
-                            <p><strong>Status:</strong> ${charger.status}</p>
-                            <p><strong>Energy Capacity:</strong> ${charger.energyCapacity}</p>
-                            <p><strong>Connector Type:</strong> ${charger.connectorType}</p>
-                            <p><strong>Firmware Version:</strong> ${charger.firmwareVersion}</p>
-                            <p><strong>Software Version:</strong> ${charger.softwareVersion}</p>
-                            <p><strong>Location:</strong> ${charger.location.zipCode} (${charger.location.latitude}, ${charger.location.longitude})</p>
-                            <p><strong>On-chain Data:</strong> <a href="${charger.onChainData.vppScanUrl}" target="_blank">${charger.onChainData.transactionHash}</a></p>
-                        </div>
+                    <div class="p-2 text-sm font-medium">
+                        <h3 class="text-lg font-semibold text-blue-600">${charger.manufacturer} - ${charger.model}</h3>
+                        <p><strong>Status:</strong> ${charger.status}</p>
+                        <p><strong>Energy Capacity:</strong> ${charger.energyCapacity}</p>
+                        <p><strong>Connector Type:</strong> ${charger.connectorType}</p>
+                        <p><strong>Location:</strong> ${charger.location.zipCode} (${charger.location.latitude}, ${charger.location.longitude})</p>
                     </div>
                 `;
 
@@ -100,44 +105,43 @@ const UserMap = () => {
                     .addTo(map);
 
                 marker.getElement().addEventListener('click', () => {
-                    setSelectedCharger(charger); // Store selected charger
+                    setSelectedCharger(charger);
                 });
+
+                setMarkers(prev => [...prev, marker]);
             });
         }
     };
 
-    // Add markers to the map when chargers are loaded
+    // Add markers when chargers are ready
     useEffect(() => {
         if (map && chargers.length > 0) {
+            console.log('Chargers fetched, adding markers...');
             addMarkersToMap(chargers);
         }
     }, [map, chargers]);
 
-    // Handle connection to charger
-    const handleConnect = () => {
+    // Handle form submission for charging
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
         if (selectedCharger && selectedCharger.status === 'Available') {
-            alert(`Connecting to ${selectedCharger.manufacturer} - ${selectedCharger.model}`);
-            console.log("Charging amount:", chargeAmount);
-            console.log("Device info:", deviceInfo);
+            console.log('Charging amount:', chargeAmount);
+            console.log('Device info:', deviceInfo);
         } else {
             alert('This charger is not available for connection.');
         }
     };
 
-    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        handleConnect();
-    };
-
     return (
-        <div className={styles.container}>
-            <div className={styles.mapContainer}>
-                <div id="map" className={styles.map} style={{ width: '100%', height: '100%' }}></div>
+        <div className="flex flex-col lg:flex-row gap-6 h-screen">
+            <div className="lg:w-2/3 w-full h-full relative border rounded-lg shadow">
+                {/* Ensure the map height is 100% */}
+                <div id="map" className="w-full h-full rounded-lg" />
             </div>
 
             {selectedCharger && (
-                <div className={styles.chargerDetails}>
-                    <h2>Charger Details</h2>
+                <div className="lg:w-1/3 w-full bg-white p-6 shadow-md rounded-lg">
+                    <h2 className="text-2xl font-bold mb-4">Charger Details</h2>
                     <p><strong>Manufacturer:</strong> {selectedCharger.manufacturer}</p>
                     <p><strong>Model:</strong> {selectedCharger.model}</p>
                     <p><strong>Status:</strong> {selectedCharger.status}</p>
@@ -146,55 +150,59 @@ const UserMap = () => {
                     <p><strong>Location:</strong> {selectedCharger.location.zipCode} ({selectedCharger.location.latitude}, {selectedCharger.location.longitude})</p>
 
                     {selectedCharger.status === 'Available' ? (
-                        <form onSubmit={handleFormSubmit}>
+                        <form onSubmit={handleFormSubmit} className="mt-4 space-y-4">
                             <div>
-                                <label htmlFor="chargeAmount">Charge Amount (kWh):</label>
+                                <label htmlFor="chargeAmount" className="block font-medium text-gray-700">Charge Amount (kWh):</label>
                                 <input
                                     id="chargeAmount"
                                     type="number"
                                     placeholder="Enter amount"
                                     value={chargeAmount}
                                     onChange={(e) => setChargeAmount(e.target.value)}
+                                    className="mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                     required
                                 />
                             </div>
                             <div>
-                                <label htmlFor="deviceName">Device Name:</label>
+                                <label htmlFor="deviceName" className="block font-medium text-gray-700">Device Name:</label>
                                 <input
                                     id="deviceName"
                                     type="text"
                                     placeholder="Enter your device name"
                                     value={deviceInfo.deviceName}
                                     onChange={(e) => setDeviceInfo({ ...deviceInfo, deviceName: e.target.value })}
+                                    className="mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                     required
                                 />
                             </div>
                             <div>
-                                <label htmlFor="deviceType">Device Type:</label>
+                                <label htmlFor="deviceType" className="block font-medium text-gray-700">Device Type:</label>
                                 <input
                                     id="deviceType"
                                     type="text"
                                     placeholder="Enter device type (e.g., EV model)"
                                     value={deviceInfo.deviceType}
                                     onChange={(e) => setDeviceInfo({ ...deviceInfo, deviceType: e.target.value })}
+                                    className="mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                     required
                                 />
                             </div>
                             <div>
-                                <label htmlFor="batteryCapacity">Battery Capacity (kWh):</label>
+                                <label htmlFor="batteryCapacity" className="block font-medium text-gray-700">Battery Capacity (kWh):</label>
                                 <input
                                     id="batteryCapacity"
                                     type="number"
                                     placeholder="Enter battery capacity"
                                     value={deviceInfo.batteryCapacity}
                                     onChange={(e) => setDeviceInfo({ ...deviceInfo, batteryCapacity: e.target.value })}
+                                    className="mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                     required
                                 />
                             </div>
-                            <button className={styles.connectButton} type="submit">Connect</button>
+                            <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-700 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Connect</button>
                         </form>
                     ) : (
-                        <button className={styles.disabledButton} disabled>Not Available</button>
+                        <button className="w-full bg-gray-300 text-gray-500 py-2 px-4 rounded-lg cursor-not-allowed" disabled>Not Available</button>
                     )}
                 </div>
             )}
