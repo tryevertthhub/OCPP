@@ -43,8 +43,8 @@ const devices: Device[] = [
         status: 'Available',
         firmwareVersion: '1.2.4',
         softwareVersion: '2.3.1',
-        connectorType: 'CCS', // Example
-        energyCapacity: '48A', // Example
+        connectorType: 'CCS',
+        energyCapacity: '48A',
         onChainData: {
             transactionHash: '0xabc123',
             timestamp: '2024-10-20T12:34:56Z',
@@ -67,13 +67,85 @@ const devices: Device[] = [
         status: 'Charging',
         firmwareVersion: '2.1.0',
         softwareVersion: '3.0.2',
-        connectorType: 'CHAdeMO', // Example
-        energyCapacity: '250kW', // Example
+        connectorType: 'CHAdeMO',
+        energyCapacity: '250kW',
         onChainData: {
             transactionHash: '0xdef456',
             timestamp: '2024-10-21T14:45:10Z',
             blockNumber: 123789,
             vppScanUrl: 'https://vppscan.com/tx/0xdef456',
+        },
+    },
+    {
+        id: 3,
+        name: 'Charger 3',
+        location: {
+            latitude: 51.5074,
+            longitude: -0.1278,
+            zipCode: 'EC1A 1BB',
+        },
+        details: 'Disconnected',
+        power: 60,
+        manufacturer: 'ChargePoint',
+        model: 'Express Plus',
+        status: 'Available',
+        firmwareVersion: '3.2.1',
+        softwareVersion: '4.5.1',
+        connectorType: 'Type 2',
+        energyCapacity: '100kW',
+        onChainData: {
+            transactionHash: '0xghi789',
+            timestamp: '2024-10-22T10:20:30Z',
+            blockNumber: 124000,
+            vppScanUrl: 'https://vppscan.com/tx/0xghi789',
+        },
+    },
+    {
+        id: 4,
+        name: 'Charger 4',
+        location: {
+            latitude: 48.8566,
+            longitude: 2.3522,
+            zipCode: '75001',
+        },
+        details: 'Connected',
+        power: 80,
+        manufacturer: 'EVBox',
+        model: 'Ultroniq',
+        status: 'Charging',
+        firmwareVersion: '4.0.1',
+        softwareVersion: '5.2.3',
+        connectorType: 'CCS',
+        energyCapacity: '350kW',
+        onChainData: {
+            transactionHash: '0xjkl012',
+            timestamp: '2024-10-23T16:12:45Z',
+            blockNumber: 124123,
+            vppScanUrl: 'https://vppscan.com/tx/0xjkl012',
+        },
+    },
+    {
+        id: 5,
+        name: 'Charger 5',
+        location: {
+            latitude: 35.6895,
+            longitude: 139.6917,
+            zipCode: '100-0001',
+        },
+        details: 'Disconnected',
+        power: 100,
+        manufacturer: 'ABB',
+        model: 'Terra 54',
+        status: 'Available',
+        firmwareVersion: '5.1.3',
+        softwareVersion: '6.0.0',
+        connectorType: 'CHAdeMO',
+        energyCapacity: '125kW',
+        onChainData: {
+            transactionHash: '0xmnq345',
+            timestamp: '2024-10-24T18:30:50Z',
+            blockNumber: 124456,
+            vppScanUrl: 'https://vppscan.com/tx/0xmnq345',
         },
     },
 ];
@@ -172,12 +244,14 @@ export async function POST(request: Request) {
 
         if (onChainResult.success) {
             devices.push(newDevice);
+
             return NextResponse.json(newDevice, { status: 201 });
         } else {
             return NextResponse.json({ message: 'Failed to store device on chain' }, { status: 500 });
         }
     } catch (error) {
         console.error("Error:", error);
+        
         return NextResponse.json({ message: 'Invalid request data' }, { status: 400 });
     }
 }
