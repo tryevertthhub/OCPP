@@ -150,10 +150,12 @@ const devices: Device[] = [
     },
 ];
 
+
 // Simulated Dione L1 storage integration (for the Registry Service)
 async function storeOnDione(device: Device) {
     // Simulate storing the device on the Dione L1 chain (testnet)
     console.log('Storing device on Dione L1:', device);
+
     return { success: true, device };
 }
 
