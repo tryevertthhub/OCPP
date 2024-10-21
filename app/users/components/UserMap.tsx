@@ -1,9 +1,10 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
-import { motion } from 'framer-motion';
 
+import { useEffect, useState, useRef } from 'react';
+import toast, { Toaster } from 'react-hot-toast'; // Import the toast librar
+import mapboxgl from 'mapbox-gl';
+import { motion } from 'framer-motion';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGVqYW5mZXRvdnNraSIsImEiOiJjbTJkaWd5c3IxZHpkMmpyMnFoNmM5Mnh4In0.G7TWLfvTgQtdtROdDQJFcQ';
 
@@ -49,6 +50,7 @@ const UserMap = () => {
         location: '',
         status: '',
     });
+
     const detailsRef = useRef<HTMLDivElement | null>(null);
 
     // Fetch chargers from API
@@ -57,6 +59,7 @@ const UserMap = () => {
             try {
                 const response = await fetch('/api/devices');
                 const data = await response.json();
+
                 setChargers(data);
                 setFilteredChargers(data); // Initialize filtered chargers to show all chargers initially
             } catch (error) {
@@ -85,71 +88,14 @@ const UserMap = () => {
         };
     }, [map]);
 
-    const handleZoomIn = () => {
-        if (map) map.zoomIn();
-    };
-
-    const handleZoomOut = () => {
-        if (map) map.zoomOut();
-    };
-    
-    // Function to add markers to the map
-    const addMarkersToMap = (chargersToShow: Charger[]) => {
-        if (map) {
-            markers.forEach(marker => marker.remove());
-            setMarkers([]);
-
-            chargersToShow.forEach(charger => {
-                const markerElement = document.createElement('div');
-                markerElement.className = 'custom-marker';
-
-                markerElement.style.backgroundColor = '#ff4e42';
-                markerElement.style.width = '20px';
-                markerElement.style.height = '20px';
-                markerElement.style.borderRadius = '50%';
-                markerElement.style.border = '2px solid white';
-                markerElement.style.cursor = 'pointer';
-
-                const marker = new mapboxgl.Marker({ element: markerElement })
-                    .setLngLat([charger.location.longitude, charger.location.latitude])
-                    .addTo(map);
-
-                marker.getElement().addEventListener('click', () => {
-                    setSelectedCharger(charger);
-                });
-
-                setMarkers(prev => [...prev, marker]);
-            });
-        }
-    };
-
-    // Add markers when chargers are ready
+     // Add markers when chargers are ready
     useEffect(() => {
         if (map && filteredChargers.length > 0) {
-            addMarkersToMap(filteredChargers);
+             addMarkersToMap(filteredChargers);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [map, filteredChargers]);
 
-    // Handle form submission for charging
-    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (selectedCharger && selectedCharger.status === 'Available') {
-            console.log('Charging amount:', chargeAmount);
-            console.log('Device info:', deviceInfo);
-        } else {
-            alert('This charger is not available for connection.');
-        }
-    };
-
-    // Close UI when clicking outside
-    const handleClickOutside = (e: MouseEvent) => {
-        if (detailsRef.current && !detailsRef.current.contains(e.target as Node)) {
-            setSelectedCharger(null);
-        }
-    };
-
-    // Add event listener for outside clicks
     useEffect(() => {
         if (selectedCharger) {
             document.addEventListener('mousedown', handleClickOutside);
@@ -161,7 +107,67 @@ const UserMap = () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [selectedCharger]);
+    // Function to add markers to the map
+    const addMarkersToMap = (chargersToShow: Charger[]) => {
+        if (map) {
+            // Remove old markers from the map
+            markers.forEach(marker => marker.remove());
+            setMarkers([]);
 
+            chargersToShow.forEach(charger => {
+                const markerElement = document.createElement('div');
+                markerElement.className = 'custom-marker';
+
+                // Conditionally set marker color based on charger status
+                if (charger.status === 'Available') {
+                    markerElement.style.backgroundColor = 'green'; // Green for available chargers
+                } else {
+                    markerElement.style.backgroundColor = '#ff4e42'; // Red for non-available chargers
+                }
+                
+                markerElement.style.width = '20px';
+                markerElement.style.height = '20px';
+                markerElement.style.borderRadius = '50%';
+                markerElement.style.border = '2px solid white';
+                markerElement.style.cursor = 'pointer';
+
+                const marker = new mapboxgl.Marker({ element: markerElement })
+                    .setLngLat([charger.location.longitude, charger.location.latitude])
+                    .addTo(map);
+
+                // Click handler for marker to show charger details
+                marker.getElement().addEventListener('click', () => {
+                    setSelectedCharger(charger);
+                });
+
+                setMarkers(prev => [...prev, marker]);
+            });
+        }
+    };
+
+    // Handle form submission for charging
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        if (selectedCharger && selectedCharger.status === 'Available') {
+            //Debug process
+            console.log('Charging amount:', chargeAmount);
+            console.log('Device info:', deviceInfo);
+
+            setSelectedCharger(null);
+            // Show success toast
+            toast.success('Charger connected successfully!');
+        } else {
+            toast.error('Please fill in all fields and ensure the charger is available.');
+        }
+    };
+
+    // Close UI when clicking outside
+    const handleClickOutside = (e: MouseEvent) => {
+        if (detailsRef.current && !detailsRef.current.contains(e.target as Node)) {
+            setSelectedCharger(null);
+        }
+    };
     // Handle filtering logic based on search input
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -182,11 +188,21 @@ const UserMap = () => {
     const handleClose = () => {
         setSelectedCharger(null);
     };
+    //Zoom Event
+    const handleZoomIn = () => {
+        if (map) map.zoomIn();
+    };
+
+    const handleZoomOut = () => {
+        if (map) map.zoomOut();
+    };
+    
 
     return (
         <div className="relative h-screen w-full">
             <div id="map" className="absolute inset-0 w-full h-full" />
-
+            <Toaster position="top-right" /> {/* Add Toaster to display toast notifications */}
+            
             {/* Zoom control buttons */}
             <div className="absolute bottom-5 right-10 bottom-5 flex space-x-4 bg-white bg-opacity-80 backdrop-blur-md rounded-full">
                 <button
