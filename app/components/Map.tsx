@@ -1,9 +1,10 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
 import { motion } from 'framer-motion';
 import { Dialog } from '@headlessui/react'; // Headless UI for modal
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGVqYW5mZXRvdnNraSIsImEiOiJjbTJkaWd5c3IxZHpkMmpyMnFoNmM5Mnh4In0.G7TWLfvTgQtdtROdDQJFcQ';
 
@@ -64,7 +65,9 @@ const Map = () => {
             try {
                 const response = await fetch('/api/devices');
                 const data = await response.json();
+
                 setDevices(data);
+
                 setFilteredDevices(data);
             } catch (error) {
                 console.error('Error fetching devices:', error);
@@ -83,6 +86,11 @@ const Map = () => {
 
         return () => mapboxMap.remove();
     }, []);
+
+    useEffect(() => {
+        addMarkersToMap(filteredDevices);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [map, filteredDevices]);
 
     const addMarkersToMap = (devicesToShow: Device[]) => {
         if (map) {
@@ -126,13 +134,10 @@ const Map = () => {
         if (map) map.zoomOut();
     };
 
-    useEffect(() => {
-        addMarkersToMap(filteredDevices);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [map, filteredDevices]);
-
+    /* Form Handler part  */ 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
+
         setSearchTerm(value);
         setFilteredDevices(devices.filter(device => device.manufacturer.toLowerCase().includes(value.toLowerCase())));
     };
@@ -187,6 +192,7 @@ const Map = () => {
 
             if (response.ok) {
                 const addedDevice = await response.json();
+
                 setDevices([...devices, addedDevice]);
                 setFilteredDevices([...devices, addedDevice]);
                 addMarkersToMap([...devices, addedDevice]);
@@ -243,6 +249,7 @@ const Map = () => {
         setSelectedDevice(device);
         setIsModalOpen(true); // Show the modal with device details
     };
+
     const handleCloseModal = () => {
         setSelectedDevice(null);
         setIsModalOpen(false);
@@ -363,19 +370,112 @@ const Map = () => {
             >
                 <h2 className="text-xl font-bold mb-4">Add New Charger</h2>
                 <form onSubmit={handleFormSubmit} className="space-y-2">
-                    <input className="w-full p-2 border rounded" name="name" placeholder="Device Name" value={deviceInfo.name} onChange={handleFormChange} required />
-                    <input className="w-full p-2 border rounded" name="manufacturer" placeholder="Manufacturer" value={deviceInfo.manufacturer} onChange={handleFormChange} required />
-                    <input className="w-full p-2 border rounded" name="model" placeholder="Model" value={deviceInfo.model} onChange={handleFormChange} required />
-                    <input className="w-full p-2 border rounded" name="energyCapacity" placeholder="Energy Capacity" value={deviceInfo.energyCapacity} onChange={handleFormChange} required />
-                    <input className="w-full p-2 border rounded" name="status" placeholder="Status" value={deviceInfo.status} onChange={handleFormChange} required />
-                    <input className="w-full p-2 border rounded" name="firmwareVersion" placeholder="Firmware Version" value={deviceInfo.firmwareVersion} onChange={handleFormChange} required />
-                    <input className="w-full p-2 border rounded" name="softwareVersion" placeholder="Software Version" value={deviceInfo.softwareVersion} onChange={handleFormChange} required />
-                    <input className="w-full p-2 border rounded" name="connectorType" placeholder="Connector Type" value={deviceInfo.connectorType} onChange={handleFormChange} required />
-                    <input className="w-full p-2 border rounded" name="lat" placeholder="Latitude" type="number" value={deviceInfo.lat} onChange={handleFormChange} required />
-                    <input className="w-full p-2 border rounded" name="long" placeholder="Longitude" type="number" value={deviceInfo.long} onChange={handleFormChange} required />
-                    <input className="w-full p-2 border rounded" name="zipCode" placeholder="Zipcode" value={deviceInfo.zipCode} onChange={handleFormChange} required />
-                    <input className="w-full p-2 border rounded" name="power" placeholder="Power (kW)" type="number" value={deviceInfo.power} onChange={handleFormChange} required />
-                    <input className="w-full p-2 border rounded" name="details" placeholder="Details" value={deviceInfo.details} onChange={handleFormChange} />
+                    <input 
+                        className="w-full p-2 border rounded" 
+                        name="name"
+                        placeholder="Device Name" 
+                        value={deviceInfo.name} 
+                        onChange={handleFormChange} 
+                        required 
+                    />
+                    <input 
+                        className="w-full p-2 border rounded" 
+                        name="manufacturer" 
+                        placeholder="Manufacturer" 
+                        value={deviceInfo.manufacturer} 
+                        onChange={handleFormChange} 
+                        required 
+                    />
+                    <input 
+                        className="w-full p-2 border rounded" 
+                        name="model" 
+                        placeholder="Model" 
+                        value={deviceInfo.model} 
+                        onChange={handleFormChange} 
+                        required 
+                    />
+                    <input 
+                        className="w-full p-2 border rounded" 
+                        name="energyCapacity" 
+                        placeholder="Energy Capacity" 
+                        value={deviceInfo.energyCapacity} 
+                        onChange={handleFormChange} 
+                        required 
+                    />
+                    <input 
+                        className="w-full p-2 border rounded" 
+                        name="status" 
+                        placeholder="Status" 
+                        value={deviceInfo.status} 
+                        onChange={handleFormChange} 
+                        required 
+                    />
+                    <input 
+                        className="w-full p-2 border rounded" 
+                        name="firmwareVersion" 
+                        placeholder="Firmware Version" 
+                        value={deviceInfo.firmwareVersion} 
+                        onChange={handleFormChange} 
+                        required 
+                    />
+                    <input 
+                        className="w-full p-2 border rounded" 
+                        name="softwareVersion" 
+                        placeholder="Software Version"
+                        value={deviceInfo.softwareVersion} 
+                        onChange={handleFormChange} 
+                        required 
+                    />
+                    <input 
+                        className="w-full p-2 border rounded" 
+                        name="connectorType" 
+                        placeholder="Connector Type" 
+                        value={deviceInfo.connectorType} 
+                        onChange={handleFormChange} 
+                        required 
+                    />
+                    <input 
+                        className="w-full p-2 border rounded" 
+                        name="lat" 
+                        placeholder="Latitude" 
+                        type="number" 
+                        value={deviceInfo.lat} 
+                        onChange={handleFormChange} 
+                        required 
+                    />
+                    <input 
+                        className="w-full p-2 border rounded" 
+                        name="long" 
+                        placeholder="Longitude" 
+                        type="number" 
+                        value={deviceInfo.long} 
+                        onChange={handleFormChange} 
+                        required 
+                    />
+                    <input 
+                        className="w-full p-2 border rounded" 
+                        name="zipCode" 
+                        placeholder="Zipcode" 
+                        value={deviceInfo.zipCode} 
+                        onChange={handleFormChange} 
+                        required 
+                    />
+                    <input 
+                        className="w-full p-2 border rounded" 
+                        name="power" 
+                        placeholder="Power (kW)" 
+                        type="number" 
+                        value={deviceInfo.power} 
+                        onChange={handleFormChange} 
+                        required 
+                    />
+                    <input 
+                        className="w-full p-2 border rounded" 
+                        name="details" 
+                        placeholder="Details" 
+                        value={deviceInfo.details} 
+                        onChange={handleFormChange} 
+                    />
                     <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded">Add Charger</button>
                 </form>
             </motion.div>
