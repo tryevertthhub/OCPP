@@ -1,22 +1,38 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { motion } from 'framer-motion';
 import { Dialog } from '@headlessui/react'; // Headless UI for modal
+import { ethers } from 'ethers'; // Import ethers.js
+import { BrowserProvider, Contract } from 'ethers';
+
+import CONTRACT_ABI from '../utils/ABI';
+
 import 'mapbox-gl/dist/mapbox-gl.css';
+
+declare global {
+    interface Window {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ethereum: any;
+    }
+}
+const CONTRACT_ADDRESS = '0x70774c2d0BB9Fe7564D4557CD417b23C757e2126';
+
+
 
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGVqYW5mZXRvdnNraSIsImEiOiJjbTJkaWd5c3IxZHpkMmpyMnFoNmM5Mnh4In0.G7TWLfvTgQtdtROdDQJFcQ';
 
-interface OnChainData {
-    transactionHash: string;
-    timestamp: string;
-    blockNumber: number;
-    vppScanUrl: string;
-}
+// interface OnChainData {
+//     transactionHash: string;
+//     timestamp: string;
+//     blockNumber: number;
+//     vppScanUrl: string;
+// }
 
 interface Device {
-    id: string;
     manufacturer: string;
     model: string;
     energyCapacity: string;
@@ -29,7 +45,7 @@ interface Device {
         longitude: number;
         zipCode: string;
     };
-    onChainData: OnChainData;
+  
 }
 
 const Map = () => {
@@ -40,7 +56,6 @@ const Map = () => {
     const [selectedDevice, setSelectedDevice] = useState<Device | null>(null); 
     const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
     const [deviceInfo, setDeviceInfo] = useState({
-        name: '',
         manufacturer: '',
         model: '',
         energyCapacity: '',
@@ -48,33 +63,40 @@ const Map = () => {
         firmwareVersion: '',
         softwareVersion: '',
         connectorType: '',
-        details: '',
         power: '',
         lat: '',
         long: '',
-        zipCode: '',
-        transactionHash: '',
-        timestamp: '',
-        blockNumber: '',
-        vppScanUrl: ''
+        zipCode: ''
     });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [provider, setProvider] = useState<BrowserProvider | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [signer, setSigner] = useState<ethers.Signer | null>(null);
+    const [contract, setContract] = useState<Contract | null>(null);
+
     const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
 
-    useEffect(() => {
-        const fetchDevices = async () => {
-            try {
-                const response = await fetch('/api/devices');
-                const data = await response.json();
+     // Initialize ethers.js provider, signer, and contract
+     useEffect(() => {
+        const initBlockchain = async () => {
+            // Check if MetaMask is installed
+            if (typeof window.ethereum !== 'undefined') {
+                const provider = new BrowserProvider(window.ethereum);
+                const signer = await provider.getSigner();
+                const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-                setDevices(data);
+                setProvider(provider);
+                setSigner(signer);
+                setContract(contract);
 
-                setFilteredDevices(data);
-            } catch (error) {
-                console.error('Error fetching devices:', error);
+                // Request accounts to connect
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+            } else {
+                console.log('MetaMask is not installed');
             }
         };
 
-        fetchDevices();
+        initBlockchain();
 
         const mapboxMap = new mapboxgl.Map({
             container: 'map',
@@ -86,11 +108,73 @@ const Map = () => {
 
         return () => mapboxMap.remove();
     }, []);
-
+    
     useEffect(() => {
         addMarkersToMap(filteredDevices);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [map, filteredDevices]);
+
+    // Fetch chargers from the contract (assuming the contract has a getChargers function)
+    const fetchChargers = async () => {
+      if (contract) {
+          try {
+              // Fetch chargers from the contract
+              const chargers = await contract.getAllChargers();
+  
+              // Map through the result and properly decode the data
+              const decodedChargers = chargers.map((charger: any) => ({
+                  manufacturer: charger.manufacturer,
+                  model: charger.model,
+                  energyCapacity: charger.energyCapacity,
+                  status: charger.status,
+                  firmwareVersion: charger.firmwareVersion,
+                  softwareVersion: charger.softwareVersion,
+                  connectorType: charger.connectorType,
+                  location: {
+                      latitude: charger.latitude.toString(),  // Convert latitude BigNumber
+                      longitude: charger.longitude.toString(),  // Convert longitude BigNumber
+                      zipCode: charger.zipCode
+                  }
+              }));
+  
+              // Update state with the decoded chargers
+              setDevices(decodedChargers);
+              setFilteredDevices(decodedChargers);
+              console.log(decodedChargers); // Now you should see properly decoded data
+          } catch (error) {
+              console.error('Error fetching chargers:', error);
+          }
+      }
+  };
+  
+
+    useEffect(() => {
+        fetchChargers();
+    }, [contract]);
+
+    const addCharger = async (newDevice: Device) => {
+        if (contract) {
+            try {
+                const tx = await contract.addCharger(
+                    newDevice.manufacturer,
+                    newDevice.model,
+                    newDevice.energyCapacity,
+                    newDevice.status,
+                    newDevice.firmwareVersion,
+                    newDevice.softwareVersion,
+                    newDevice.connectorType,
+                    newDevice.location.latitude,
+                    newDevice.location.longitude,
+                    newDevice.location.zipCode
+                );
+                await tx.wait();
+                console.log('Charger added successfully', tx);
+               // fetchChargers(); // Fetch updated list of chargers
+            } catch (error) {
+                console.error('Error adding charger:', error);
+            }
+        }
+    };
 
     const addMarkersToMap = (devicesToShow: Device[]) => {
         if (map) {
@@ -160,7 +244,7 @@ const Map = () => {
         }
 
         const newDevice = {
-            name: deviceInfo.name,
+            // name: deviceInfo.name,
             manufacturer: deviceInfo.manufacturer,
             model: deviceInfo.model,
             energyCapacity: deviceInfo.energyCapacity,
@@ -172,33 +256,16 @@ const Map = () => {
                 latitude,
                 longitude,
                 zipCode: deviceInfo.zipCode
-            },
-            details: deviceInfo.details,
-            power,
-            onChainData: {
-                transactionHash: deviceInfo.transactionHash || `0x${Math.random().toString(36).substr(2, 10)}`,
-                timestamp: deviceInfo.timestamp || new Date().toISOString(),
-                blockNumber: Number(deviceInfo.blockNumber) || Math.floor(Math.random() * 1000000),
-                vppScanUrl: deviceInfo.vppScanUrl || 'https://vppscan.com/tx/0xabc123'
             }
         };
+        await addCharger(newDevice);
 
-        try {
-            const response = await fetch('/api/addDevice', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newDevice)
-            });
-
-            if (response.ok) {
-                const addedDevice = await response.json();
-
-                setDevices([...devices, addedDevice]);
-                setFilteredDevices([...devices, addedDevice]);
-                addMarkersToMap([...devices, addedDevice]);
+        setDevices([...devices, newDevice]);
+                setFilteredDevices([...devices, newDevice]);
+                addMarkersToMap([...devices, newDevice]);
 
                 setDeviceInfo({
-                    name: '',
+                 
                     manufacturer: '',
                     model: '',
                     energyCapacity: '',
@@ -206,26 +273,55 @@ const Map = () => {
                     firmwareVersion: '',
                     softwareVersion: '',
                     connectorType: '',
-                    details: '',
                     power: '',
                     lat: '',
                     long: '',
                     zipCode: '',
-                    transactionHash: '',
-                    timestamp: '',
-                    blockNumber: '',
-                    vppScanUrl: ''
                 });
-            } else {
-                console.error('Failed to add device', response.statusText);
-            }
-        } catch (error) {
-            console.error('Error submitting form:', error);
-        }
+        // try {
+        //     const response = await fetch('/api/addDevice', {
+        //         method: 'POST',
+        //         headers: { 'Content-Type': 'application/json' },
+        //         body: JSON.stringify(newDevice)
+        //     });
+
+        //     if (response.ok) {
+        //         const addedDevice = await response.json();
+
+        //         setDevices([...devices, addedDevice]);
+        //         setFilteredDevices([...devices, addedDevice]);
+        //         addMarkersToMap([...devices, addedDevice]);
+
+        //         setDeviceInfo({
+        //             name: '',
+        //             manufacturer: '',
+        //             model: '',
+        //             energyCapacity: '',
+        //             status: '',
+        //             firmwareVersion: '',
+        //             softwareVersion: '',
+        //             connectorType: '',
+        //             details: '',
+        //             power: '',
+        //             lat: '',
+        //             long: '',
+        //             zipCode: '',
+        //             transactionHash: '',
+        //             timestamp: '',
+        //             blockNumber: '',
+        //             vppScanUrl: ''
+        //         });
+        //     } else {
+        //         console.error('Failed to add device', response.statusText);
+        //     }
+        // } catch (error) {
+        //     console.error('Error submitting form:', error);
+        // }
     };
 
      // When a device in the list is clicked, zoom into its location and show its popup
      const handleDeviceClick = (device: Device) => {
+      console.log(device)
         if (map && device.location) {
             // Fly to the selected device location on the map
             map.flyTo({
@@ -340,7 +436,7 @@ const Map = () => {
                                     </p>
                                 </div>
 
-                                <div className="p-4 bg-white bg-opacity-50 rounded-lg shadow-inner">
+                                {/* <div className="p-4 bg-white bg-opacity-50 rounded-lg shadow-inner">
                                     <p className="text-lg font-semibold text-gray-600">Transaction Details</p>
                                     <p className="text-gray-800">Hash: {selectedDevice.onChainData.transactionHash}</p>
                                     <p className="text-gray-800">Block Number: {selectedDevice.onChainData.blockNumber}</p>
@@ -355,7 +451,7 @@ const Map = () => {
                                     >
                                         View on Chain
                                     </a>
-                                </div>
+                                </div> */}
                             </div>
                         </motion.div>
                     </div>
@@ -370,14 +466,7 @@ const Map = () => {
             >
                 <h2 className="text-xl font-bold mb-4">Add New Charger</h2>
                 <form onSubmit={handleFormSubmit} className="space-y-2">
-                    <input 
-                        className="w-full p-2 border rounded" 
-                        name="name"
-                        placeholder="Device Name" 
-                        value={deviceInfo.name} 
-                        onChange={handleFormChange} 
-                        required 
-                    />
+                   
                     <input 
                         className="w-full p-2 border rounded" 
                         name="manufacturer" 
@@ -469,13 +558,7 @@ const Map = () => {
                         onChange={handleFormChange} 
                         required 
                     />
-                    <input 
-                        className="w-full p-2 border rounded" 
-                        name="details" 
-                        placeholder="Details" 
-                        value={deviceInfo.details} 
-                        onChange={handleFormChange} 
-                    />
+                    
                     <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded">Add Charger</button>
                 </form>
             </motion.div>
@@ -496,9 +579,9 @@ const Map = () => {
                     className="w-full p-2 border rounded mb-4"
                 />
                 <ul className="space-y-2">
-                    {filteredDevices.map(device => (
+                    {filteredDevices.map((device, key) => (
                         <li
-                        key={device.id}
+                        key={key}
                         className="bg-gray-100 p-3 rounded cursor-pointer hover:bg-gray-200 relative group"  // Added 'relative' and 'group' class
                         onClick={() => handleDeviceClick(device)}
                     >
