@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
@@ -23,14 +24,7 @@ const CONTRACT_ADDRESS = '0x70774c2d0BB9Fe7564D4557CD417b23C757e2126';
 
 
 
-mapboxgl.accessToken = 'pk.eyJ1IjoiZGVqYW5mZXRvdnNraSIsImEiOiJjbTJkaWd5c3IxZHpkMmpyMnFoNmM5Mnh4In0.G7TWLfvTgQtdtROdDQJFcQ';
-
-// interface OnChainData {
-//     transactionHash: string;
-//     timestamp: string;
-//     blockNumber: number;
-//     vppScanUrl: string;
-// }
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 
 interface Device {
     manufacturer: string;
@@ -46,6 +40,13 @@ interface Device {
         zipCode: string;
     };
   
+}
+
+interface Charger {
+    station_name: string;
+    latitude: number;
+    longitude: number;
+    street_address: string;
 }
 
 const Map = () => {
@@ -76,38 +77,63 @@ const Map = () => {
 
     const [markers, setMarkers] = useState<mapboxgl.Marker[]>([]);
 
+    const [chargers, setChargers] = useState<Charger[]>([]);
+
+    
      // Initialize ethers.js provider, signer, and contract
      useEffect(() => {
         const initBlockchain = async () => {
-            // Check if MetaMask is installed
+            // Check if MetaMask or any Ethereum wallet provider is installed
             if (typeof window.ethereum !== 'undefined') {
-                const provider = new BrowserProvider(window.ethereum);
-                const signer = await provider.getSigner();
-                const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
-
-                setProvider(provider);
-                setSigner(signer);
-                setContract(contract);
-
-                // Request accounts to connect
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                try {
+                    const provider = new BrowserProvider(window.ethereum);
+                    const signer = await provider.getSigner();
+                    const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    
+                    setProvider(provider);
+                    setSigner(signer);
+                    setContract(contract);
+    
+                    // Request accounts to connect
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                } catch (error) {
+                    console.error('Error initializing blockchain connection:', error);
+                }
             } else {
-                console.log('MetaMask is not installed');
+                console.warn('MetaMask or other Ethereum wallet is not installed. Blockchain-related features will not work.');
             }
         };
-
+    
+        // Initialize mapbox even if no wallet is available
+        const initMapbox = () => {
+            const mapboxMap = new mapboxgl.Map({
+                container: 'map',
+                center: [0, 0],
+                zoom: 2,
+            });
+    
+            setMap(mapboxMap);
+    
+            return () => mapboxMap.remove();
+        };
+    
         initBlockchain();
+        initMapbox();
+        fetchAFDCChargers();  // Fetch charger data for the map
+    
+    }, []);  // Empty dependency array to only run on component mount
+    
 
-        const mapboxMap = new mapboxgl.Map({
-            container: 'map',
-            center: [0, 0],
-            zoom: 2,
-        });
-
-        setMap(mapboxMap);
-
-        return () => mapboxMap.remove();
-    }, []);
+    useEffect(() => {
+        if (map && chargers.length > 0) {
+            chargers.forEach(charger => {
+                const marker = new mapboxgl.Marker()
+                    .setLngLat([charger.longitude, charger.latitude]) // Charger location
+                    .setPopup(new mapboxgl.Popup().setHTML(`<h3>${charger.station_name}</h3><p>${charger.street_address}</p>`)) // Show station info
+                    .addTo(map);
+            });
+        }
+    }, [map, chargers]);
     
     useEffect(() => {
         addMarkersToMap(filteredDevices);
@@ -147,10 +173,19 @@ const Map = () => {
       }
   };
   
+    const fetchAFDCChargers = async () => {
+      const apiKey = process.env.NEXT_PUBLIC_AGFC_KEY;  // Replace with your API key
+      const response = await fetch(`https://developer.nrel.gov/api/alt-fuel-stations/v1/nearest.json?fuel_type=ELEC&location=Denver,CO&radius=50&api_key=${apiKey}`);
+      const data = await response.json();
+      console.log(data);
+      setChargers(data.fuel_stations); // Set the charger data
+      return data.fuel_stations;
+    };
 
     useEffect(() => {
         fetchChargers();
     }, [contract]);
+
 
     const addCharger = async (newDevice: Device) => {
         if (contract) {
