@@ -72,13 +72,27 @@ const UserMap = () => {
         if (!map) {
             const mapboxMap = new mapboxgl.Map({
                 container: 'map',
-                center: [0, 0],
+                style: 'mapbox://styles/mapbox/dark-v10',  // Set the map style to dark
+                center: [0, 0], // Center on the globe
                 zoom: 2,
+                projection: 'globe',  // Use the globe projection
             });
-
-            mapboxMap.on('load', () => {
-                setMap(mapboxMap);
+    
+            mapboxMap.on('style.load', () => {
+                mapboxMap.setFog({
+                    'range': [-1, 3],
+                    'color': 'black',
+                    'horizon-blend': 0.3,
+                    'high-color': '#245bde',
+                    'space-color': '#000000',
+                    'star-intensity': 0.95,
+                });
             });
+    
+            mapboxMap.dragRotate.enable();
+            mapboxMap.touchZoomRotate.enable();
+    
+            setMap(mapboxMap);
         }
 
         return () => {
