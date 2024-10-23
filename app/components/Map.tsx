@@ -121,7 +121,7 @@ const Map = () => {
                     'horizon-blend': 0.3,
                     'high-color': '#245bde',
                     'space-color': '#000000',
-                    'star-intensity': 0.15,
+                    'star-intensity': 0.95,
                 });
             });
     
