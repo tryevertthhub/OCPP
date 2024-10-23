@@ -119,7 +119,7 @@ const Map = () => {
                     'range': [-1, 3],
                     'color': 'black',
                     'horizon-blend': 0.3,
-                    'high-color': '#245bde',
+                    'high-color': '#000000',
                     'space-color': '#000000',
                     'star-intensity': 0.95,
                 });
