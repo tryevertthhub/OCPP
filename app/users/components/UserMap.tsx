@@ -6,7 +6,7 @@ import mapboxgl from 'mapbox-gl';
 import { motion } from 'framer-motion';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-mapboxgl.accessToken = 'pk.eyJ1IjoiZGVqYW5mZXRvdnNraSIsImEiOiJjbTJkaWd5c3IxZHpkMmpyMnFoNmM5Mnh4In0.G7TWLfvTgQtdtROdDQJFcQ';
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 
 interface OnChainData {
     transactionHash: string;
@@ -107,6 +107,19 @@ const UserMap = () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [selectedCharger]);
+
+    useEffect(() => {
+        const filtered = chargers.filter((charger) => {
+            const matchesCapacity = !search.capacity || charger.energyCapacity.includes(search.capacity);
+            const matchesLocation = !search.location || charger.location.zipCode.includes(search.location);
+            const matchesStatus = !search.status || charger.status.includes(search.status);
+
+            return matchesCapacity && matchesLocation && matchesStatus;
+        });
+
+        setFilteredChargers(filtered);
+    }, [search, chargers]);
+
     // Function to add markers to the map
     const addMarkersToMap = (chargersToShow: Charger[]) => {
         if (map) {
@@ -171,19 +184,10 @@ const UserMap = () => {
     // Handle filtering logic based on search input
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setSearch(prev => ({ ...prev, [name]: value }));
-
-        const filtered = chargers.filter(charger => {
-            const matchesCapacity = !search.capacity || charger.energyCapacity.includes(search.capacity);
-            const matchesLocation = !search.location || charger.location.zipCode.includes(search.location);
-            const matchesStatus = !search.status || charger.status.includes(search.status);
-
-            return matchesCapacity && matchesLocation && matchesStatus;
-        });
-
-        setFilteredChargers(filtered);
+        setSearch((prev) => ({ ...prev, [name]: value }));
     };
 
+    
     // Function to close UI using the close button
     const handleClose = () => {
         setSelectedCharger(null);
