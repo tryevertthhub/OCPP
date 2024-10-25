@@ -328,46 +328,7 @@ const Map = () => {
                     lat: '',
                     long: '',
                     zipCode: '',
-                });
-        // try {
-        //     const response = await fetch('/api/addDevice', {
-        //         method: 'POST',
-        //         headers: { 'Content-Type': 'application/json' },
-        //         body: JSON.stringify(newDevice)
-        //     });
-
-        //     if (response.ok) {
-        //         const addedDevice = await response.json();
-
-        //         setDevices([...devices, addedDevice]);
-        //         setFilteredDevices([...devices, addedDevice]);
-        //         addMarkersToMap([...devices, addedDevice]);
-
-        //         setDeviceInfo({
-        //             name: '',
-        //             manufacturer: '',
-        //             model: '',
-        //             energyCapacity: '',
-        //             status: '',
-        //             firmwareVersion: '',
-        //             softwareVersion: '',
-        //             connectorType: '',
-        //             details: '',
-        //             power: '',
-        //             lat: '',
-        //             long: '',
-        //             zipCode: '',
-        //             transactionHash: '',
-        //             timestamp: '',
-        //             blockNumber: '',
-        //             vppScanUrl: ''
-        //         });
-        //     } else {
-        //         console.error('Failed to add device', response.statusText);
-        //     }
-        // } catch (error) {
-        //     console.error('Error submitting form:', error);
-        // }
+                });    
     };
 
      // When a device in the list is clicked, zoom into its location and show its popup
